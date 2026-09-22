@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ヴァナ・ディール ステータス計算機</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#12141c;
+  --panel:#1a1d2a;
+  --panel-2:#20243350;
+  --line: #33384c;
+  --gold:#c9a24a;
+  --gold-soft:#e3c98a;
+  --ink:#e9e6de;
+  --ink-dim:#a7a9b8;
+  --blue:#5b7fb0;
+  --danger:#c0604a;
+  --good:#7fae6d;
+  --radius: 6px;
+  --serif: 'Shippori Mincho', serif;
+  --sans: 'Zen Kaku Gothic New', 'Hiragino Sans', sans-serif;
+}
+:root:not([data-theme="light"]){
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#f2efe6;
+    --panel:#ffffff;
+    --panel-2:#eae4d3;
+    --line:#d8d0ba;
+    --ink:#232116;
+    --ink-dim:#6b6656;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#f2efe6;
+  --panel:#ffffff;
+  --panel-2:#eae4d3;
+  --line:#d8d0ba;
+  --ink:#232116;
+  --ink-dim:#6b6656;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--sans);
+  min-height:100vh;
+  line-height:1.5;
+}
+.wrap{
+  max-width:1180px;
+  margin:0 auto;
+  padding:28px 20px 80px;
+}
+header.top{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:10px 24px;
+  border-bottom:1px solid var(--line);
+  padding-bottom:18px;
+  margin-bottom:22px;
+}
+h1{
+  font-family:var(--serif);
+  font-weight:700;
+  font-size:1.7rem;
+  letter-spacing:.02em;
+  margin:0;
+  color:var(--gold-soft);
+}
+h1 small{
+  display:block;
+  font-family:var(--sans);
+  font-weight:400;
+  font-size:.78rem;
+  color:var(--ink-dim);
+  margin-top:4px;
+  letter-spacing:.04em;
+}
+nav.tabs{
+  display:flex;
+  gap:6px;
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:4px;
+}
+nav.tabs button{
+  border:none;
+  background:transparent;
+  color:var(--ink-dim);
+  font-family:var(--sans);
+  font-size:.92rem;
+  padding:8px 18px;
+  border-radius:999px;
+  cursor:pointer;
+  transition:background .15s, color .15s;
+}
+nav.tabs button.active{
+  background:var(--gold);
+  color:#20140a;
+  font-weight:700;
+}
+section.tabpanel{display:none;}
+section.tabpanel.active{display:block;}
+
+.card{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:20px 22px;
+  margin-bottom:20px;
+}
+.card h2{
+  font-family:var(--serif);
+  font-size:1.05rem;
+  margin:0 0 16px;
+  color:var(--gold-soft);
+  border-left:3px solid var(--gold);
+  padding-left:10px;
+}
+.grid-setup{
+  display:flex;
+  flex-wrap:wrap;
+  gap:16px;
+}
+.grid-setup .field{
+  flex:1 1 220px;
+  min-width:160px;
+}
+.field label{
+  display:block;
+  font-size:.76rem;
+  color:var(--ink-dim);
+  margin-bottom:5px;
+  letter-spacing:.03em;
+}
+select, input[type=number]{
+  width:100%;
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  color:var(--ink);
+  padding:8px 9px;
+  border-radius:4px;
+  font-family:var(--sans);
+  font-size:.92rem;
+}
+select:focus, input:focus{outline:2px solid var(--blue); outline-offset:1px;}
+select option{
+  color:#1c1c1c;
+  background:#ffffff;
+}
+.lv-row{display:flex; align-items:center; gap:10px;}
+.lv-row input[type=range]{flex:1; accent-color: var(--gold);}
+.lv-readout{
+  font-family:var(--serif);
+  font-size:1.1rem;
+  min-width:64px;
+  text-align:right;
+  color:var(--gold-soft);
+}
+.slv-note{font-size:.78rem;color:var(--ink-dim); margin-top:6px;}
+
+table.stat-table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:.92rem;
+}
+table.stat-table th{
+  text-align:left;
+  font-weight:500;
+  color:var(--ink-dim);
+  font-size:.78rem;
+  padding:6px 8px;
+  border-bottom:1px solid var(--line);
+}
+table.stat-table td{
+  padding:6px 8px;
+  border-bottom:1px solid var(--line);
+}
+table.stat-table td.name{color:var(--ink-dim); width:34%;}
+table.stat-table td.total{
+  font-family:var(--serif);
+  font-weight:700;
+  color:var(--gold-soft);
+  text-align:right;
+  width:20%;
+}
+table.stat-table input.adj{
+  width:64px;
+  text-align:right;
+  padding:4px 6px;
+}
+table.stat-table td.adjcell{width:20%;}
+table.stat-table td.plus, table.stat-table td.eq{
+  color:var(--ink-dim);
+  width:4%;
+  text-align:center;
+}
+
+.skillgrid{
+  display:flex;
+  flex-wrap:wrap;
+  gap:0 28px;
+}
+.skillgrid table{flex:1 1 260px; min-width:240px; width:100%; border-collapse:collapse; font-size:.88rem;}
+.skillgrid td{padding:5px 4px;border-bottom:1px solid var(--line);}
+.skillgrid td.sname{color:var(--ink-dim);}
+.skillgrid td.sval{
+  text-align:right;
+  font-family:var(--serif);
+  font-weight:700;
+  color:var(--ink);
+  width:56px;
+}
+.skillgrid td.sval.zero{color:var(--ink-dim); font-weight:400;}
+
+.sim-grid{
+  display:flex;
+  flex-wrap:wrap;
+  gap:14px;
+}
+.sim-grid .field{flex:0 1 110px; min-width:90px; max-width:120px;}
+
+.syncbar{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:16px;
+}
+button.sync{
+  background:var(--blue);
+  color:#fff;
+  border:none;
+  padding:9px 16px;
+  border-radius:4px;
+  font-family:var(--sans);
+  font-size:.86rem;
+  cursor:pointer;
+}
+button.sync:hover{filter:brightness(1.08);}
+.syncbar .note{font-size:.8rem;color:var(--ink-dim);}
+
+.spell-filter{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:14px;
+}
+.spell-filter button{
+  border:1px solid var(--line);
+  background:var(--panel-2);
+  color:var(--ink-dim);
+  padding:6px 13px;
+  border-radius:999px;
+  font-size:.8rem;
+  cursor:pointer;
+  font-family:var(--sans);
+}
+.spell-filter button.active{
+  background:var(--gold);
+  border-color:var(--gold);
+  color:#20140a;
+  font-weight:700;
+}
+table.spell-table{width:100%; border-collapse:collapse; font-size:.9rem;}
+table.spell-table th{
+  text-align:left;
+  font-size:.76rem;
+  color:var(--ink-dim);
+  padding:8px 8px;
+  border-bottom:1px solid var(--line);
+}
+table.spell-table td{padding:7px 8px; border-bottom:1px solid var(--line);}
+table.spell-table td.dmg{
+  font-family:var(--serif);
+  font-weight:700;
+  color:var(--gold-soft);
+  text-align:right;
+  font-size:1rem;
+}
+table.spell-table tr:hover td{background:var(--panel-2);}
+.spell-scroll{overflow-x:auto; border:1px solid var(--line); border-radius:4px;}
+
+footer.note{
+  color:var(--ink-dim);
+  font-size:.78rem;
+  margin-top:28px;
+  line-height:1.7;
+  border-top:1px solid var(--line);
+  padding-top:16px;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>ステータス計算機 詳細版<small>種族・職業・レベルからステータス、スキル上限、精霊魔法ダメージを算出</small></h1>
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="calc">ステータス計算機</button>
+    <button class="tab-btn" data-tab="sim">精霊魔法ダメージ</button>
+  </nav>
+</header>
+
+<!-- ===================== TAB 1: CALCULATOR ===================== -->
+<section class="tabpanel active" id="tab-calc">
+
+  <div class="card">
+    <h2>キャラクター設定</h2>
+    <div class="grid-setup">
+      <div class="field">
+        <label for="race">種族</label>
+        <select id="race"></select>
+      </div>
+      <div class="field">
+        <label for="mainJob">メインジョブ</label>
+        <select id="mainJob"></select>
+      </div>
+      <div class="field">
+        <label for="supportJob">サポートジョブ</label>
+        <select id="supportJob"></select>
+      </div>
+      <div class="field">
+        <label for="mainLv">メインレベル</label>
+        <div class="lv-row">
+          <input type="range" id="mainLv" min="0" max="50" value="45" step="1">
+          <span class="lv-readout" id="mainLvOut">45</span>
+        </div>
+        <div class="slv-note">サポートLv (自動算出): <span id="slvOut">-</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>基本ステータス</h2>
+    <table class="stat-table">
+      <thead><tr><th>項目</th><th>基本値</th><th></th><th>加算</th><th></th><th>合計</th></tr></thead>
+      <tbody id="statBody"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>魔法関連</h2>
+    <table class="stat-table">
+      <thead><tr><th>項目</th><th>基本値</th><th></th><th>加算</th><th></th><th>合計</th></tr></thead>
+      <tbody id="magicBody"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>戦闘スキル上限</h2>
+    <div class="skillgrid" id="battleSkillGrid"></div>
+  </div>
+
+  <div class="card">
+    <h2>魔法スキル上限</h2>
+    <div class="skillgrid" id="magicSkillGrid"></div>
+  </div>
+
+</section>
+
+<!-- ===================== TAB 2: DAMAGE SIM ===================== -->
+<section class="tabpanel" id="tab-sim">
+
+  <div class="card">
+    <h2>ダメージ計算パラメータ</h2>
+    <div class="syncbar">
+      <button class="sync" id="syncBtn">ステータス計算機の値を反映</button>
+      <span class="note">自INT・自魔攻・魔法ダメージ・MB.ボーナス((MBボーナス+MBボーナスII)÷100)を計算機タブの結果で上書きします</span>
+    </div>
+    <div class="sim-grid">
+      <div class="field"><label for="s_selfInt">自 INT</label><input type="number" id="s_selfInt" value="504"></div>
+      <div class="field"><label for="s_enemyInt">敵 INT</label><input type="number" id="s_enemyInt" value="6"></div>
+      <div class="field"><label for="s_enemyMdef">敵 魔法防御</label><input type="number" id="s_enemyMdef" value="100"></div>
+      <div class="field"><label for="s_selfMatk">自 魔法攻撃力</label><input type="number" id="s_selfMatk" value="563"></div>
+      <div class="field"><label for="s_mdmg">魔法ダメージ</label><input type="number" id="s_mdmg" value="531"></div>
+      <div class="field"><label for="s_mult_soujou">相乗効果</label>
+        <select id="s_mult_soujou">
+          <option value="1.00">1.00</option>
+          <option value="1.05">1.05</option>
+          <option value="1.10">1.10</option>
+          <option value="1.15">1.15</option>
+          <option value="1.20">1.20</option>
+          <option value="1.25">1.25</option>
+        </select>
+      </div>
+      <div class="field"><label for="s_mult_affi">アフィニティ</label><input type="number" step="0.01" id="s_mult_affi" value="1"></div>
+      <div class="field"><label for="s_mult_mb1">MBボーナス</label>
+        <select id="s_mult_mb1">
+          <option value="1.00">1.00</option>
+          <option value="1.30">1.30</option>
+          <option value="1.35">1.35</option>
+          <option value="1.45">1.45</option>
+          <option value="1.70">1.70</option>
+          <option value="1.90">1.90</option>
+          <option value="2.45">2.45</option>
+          <option value="2.80">2.80</option>
+        </select>
+      </div>
+      <div class="field"><label for="s_mult_mb2">MB.ボーナス</label><input type="number" step="0.01" id="s_mult_mb2" value="1"></div>
+      <div class="field"><label for="s_mult_resist">レジスト</label>
+        <select id="s_mult_resist">
+          <option value="1.00">1.00</option>
+          <option value="0.50">0.50</option>
+          <option value="0.25">0.25</option>
+          <option value="0.125">0.125</option>
+        </select>
+      </div>
+      <div class="field"><label for="s_mult_kyoyuu">虚誘掩殺</label>
+        <select id="s_mult_kyoyuu">
+          <option value="1.00">1.00</option>
+          <option value="1.05">1.05</option>
+          <option value="1.10">1.10</option>
+          <option value="1.15">1.15</option>
+          <option value="1.20">1.20</option>
+          <option value="1.25">1.25</option>
+        </select>
+      </div>
+      <div class="field"><label for="s_mult_weather">曜日・天候</label>
+        <select id="s_mult_weather">
+          <option value="1.00">1.00</option>
+          <option value="1.35">1.35</option>
+          <option value="1.25">1.25</option>
+          <option value="1.20">1.20</option>
+          <option value="1.15">1.15</option>
+          <option value="1.10">1.10</option>
+          <option value="0.90">0.90</option>
+          <option value="0.85">0.85</option>
+          <option value="0.80">0.80</option>
+          <option value="0.75">0.75</option>
+          <option value="0.65">0.65</option>
+        </select>
+      </div>
+      <div class="field"><label for="s_mult_gambit">ガンビット</label>
+        <select id="s_mult_gambit">
+          <option value="1.00">1.00</option>
+          <option value="1.10">1.10</option>
+          <option value="1.20">1.20</option>
+          <option value="1.30">1.30</option>
+        </select>
+      </div>
+      <div class="field"><label for="s_mult_shell">シェル等</label><input type="number" step="0.01" id="s_mult_shell" value="1"></div>
+      <div class="field"><label for="s_mult_kien">気炎</label>
+        <select id="s_mult_kien">
+          <option value="1.00">1.00</option>
+          <option value="1.20">1.20</option>
+          <option value="1.25">1.25</option>
+          <option value="1.30">1.30</option>
+          <option value="1.32">1.32</option>
+          <option value="1.35">1.35</option>
+          <option value="1.38">1.38</option>
+          <option value="1.41">1.41</option>
+        </select>
+      </div>
+    </div>
+    <div class="slv-note" style="margin-top:12px;">⊿INT = 自INT − 敵INT = <b id="deltaIntOut">-</b> ／ 魔攻/魔防 = 自魔攻 ÷ 敵魔法防御 = <b id="matkRatioOut">-</b>(自動計算)</div>
+  </div>
+
+  <div class="card">
+    <h2>精霊魔法ダメージ一覧</h2>
+    <div class="spell-filter" id="spellFilter"></div>
+    <div class="spell-scroll">
+      <table class="spell-table">
+        <thead><tr><th>魔法名</th><th>D値</th><th style="text-align:right;">ダメージ</th></tr></thead>
+        <tbody id="spellBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</section>
+
+<footer class="note">
+  元のExcelファイル「ステータス計算機.xlsx」(Main / Battle Skill / Magic Skill / Stats / Job Trait / data シート) の数式をそのまま再現しています。<br>
+  レベル入力域はサポートLv換算テーブル(Lv49〜59)に対応する範囲(メインLv 0〜50)に対応しています。「Magnification」シートおよびStatsシート内の「ステータスランク表」は他の計算式から参照されていない未使用データのため、本ツールには含めていません。
+</footer>
+
+</div>
+
+<script>
+const APPDATA = {"races": {"ヒューム": {"STR": "D", "DEX": "D", "VIT": "D", "AGI": "D", "INT": "D", "MND": "D", "CHR": "D"}, "エルヴァーン": {"STR": "B", "DEX": "E", "VIT": "C", "AGI": "F", "INT": "F", "MND": "B", "CHR": "D"}, "タルタル": {"STR": "F", "DEX": "D", "VIT": "E", "AGI": "C", "INT": "A", "MND": "E", "CHR": "D"}, "ミスラ": {"STR": "E", "DEX": "A", "VIT": "E", "AGI": "B", "INT": "D", "MND": "E", "CHR": "F"}, "ガルカ": {"STR": "C", "DEX": "D", "VIT": "A", "AGI": "E", "INT": "E", "MND": "D", "CHR": "F"}}, "jobsStats": {"戦士": {"STR": "A", "DEX": "C", "VIT": "D", "AGI": "C", "INT": "F", "MND": "F", "CHR": "E"}, "モンク": {"STR": "C", "DEX": "B", "VIT": "A", "AGI": "F", "INT": "G", "MND": "D", "CHR": "E"}, "白魔道士": {"STR": "D", "DEX": "F", "VIT": "D", "AGI": "E", "INT": "E", "MND": "A", "CHR": "C"}, "黒魔道士": {"STR": "F", "DEX": "C", "VIT": "F", "AGI": "C", "INT": "A", "MND": "E", "CHR": "D"}, "赤魔道士": {"STR": "D", "DEX": "D", "VIT": "E", "AGI": "E", "INT": "C", "MND": "C", "CHR": "D"}, "シーフ": {"STR": "D", "DEX": "A", "VIT": "D", "AGI": "B", "INT": "C", "MND": "G", "CHR": "G"}, "ナイト": {"STR": "B", "DEX": "E", "VIT": "A", "AGI": "G", "INT": "G", "MND": "C", "CHR": "C"}, "暗黒騎士": {"STR": "A", "DEX": "C", "VIT": "C", "AGI": "D", "INT": "C", "MND": "G", "CHR": "G"}, "獣使い": {"STR": "D", "DEX": "C", "VIT": "D", "AGI": "F", "INT": "E", "MND": "E", "CHR": "A"}, "吟遊詩人": {"STR": "D", "DEX": "D", "VIT": "D", "AGI": "F", "INT": "D", "MND": "D", "CHR": "B"}, "狩人": {"STR": "E", "DEX": "D", "VIT": "D", "AGI": "A", "INT": "E", "MND": "D", "CHR": "E"}, "侍": {"STR": "C", "DEX": "C", "VIT": "C", "AGI": "E", "INT": "D", "MND": "D", "CHR": "D"}, "忍者": {"STR": "C", "DEX": "B", "VIT": "C", "AGI": "B", "INT": "D", "MND": "G", "CHR": "F"}, "竜騎士": {"STR": "B", "DEX": "D", "VIT": "C", "AGI": "D", "INT": "F", "MND": "E", "CHR": "C"}, "召喚士": {"STR": "F", "DEX": "E", "VIT": "F", "AGI": "D", "INT": "B", "MND": "B", "CHR": "B"}, "青魔道士": {"STR": "E", "DEX": "E", "VIT": "E", "AGI": "E", "INT": "E", "MND": "E", "CHR": "E"}, "コルセア": {"STR": "E", "DEX": "C", "VIT": "E", "AGI": "B", "INT": "C", "MND": "E", "CHR": "E"}, "からくり士": {"STR": "E", "DEX": "B", "VIT": "D", "AGI": "C", "INT": "E", "MND": "F", "CHR": "C"}, "踊り子": {"STR": "D", "DEX": "C", "VIT": "E", "AGI": "B", "INT": "F", "MND": "F", "CHR": "B"}, "学者": {"STR": "F", "DEX": "D", "VIT": "E", "AGI": "D", "INT": "B", "MND": "D", "CHR": "C"}, "風水士": {"STR": "F", "DEX": "D", "VIT": "D", "AGI": "E", "INT": "B", "MND": "B", "CHR": "E"}, "魔導剣士": {"STR": "C", "DEX": "D", "VIT": "E", "AGI": "B", "INT": "D", "MND": "D", "CHR": "F"}}, "jobOrder": ["戦士", "モンク", "白魔道士", "黒魔道士", "赤魔道士", "シーフ", "ナイト", "暗黒騎士", "獣使い", "吟遊詩人", "狩人", "侍", "忍者", "竜騎士", "召喚士", "青魔道士", "コルセア", "からくり士", "踊り子", "学者", "風水士", "魔導剣士"], "raceOrder": ["ヒューム", "エルヴァーン", "タルタル", "ミスラ", "ガルカ"], "statCoef": {"-": 0, "A": 45, "B": 42.5, "C": 40.5, "D": 37.5, "E": 34.5, "F": 31.5, "G": 28.5}, "statSupportCoefLevels": [49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59], "statSupportCoef": {"A": [14.5, 14.5, 15, 15, 15.5, 15.5, 16, 16, 16.5, 16.5, 17], "B": [12.5, 13, 13, 13, 13.5, 13.5, 14, 14, 14.5, 14.5, 15], "C": [11.5, 11.5, 12, 12, 12, 12.5, 12.5, 13, 13, 13, 13.5], "D": [9.5, 10, 10, 10, 10.5, 10.5, 10.5, 11, 11, 11, 11.5], "E": [8.5, 8.5, 9, 9, 9, 9, 9.5, 9.5, 9.5, 10, 10], "F": [7, 7, 7, 7, 7.5, 7.5, 7.5, 7.5, 8, 8, 8], "G": [5.5, 5.5, 6, 6, 6, 6, 6, 6.5, 6.5, 6.5, 6.5]}, "weaponOrder": ["格闘", "短剣", "片手剣", "両手剣", "片手斧", "両手斧", "両手鎌", "両手槍", "片手刀", "両手刀", "片手棍", "両手棍", "弓術", "射撃", "投てき", "ガード", "回避", "盾", "受け流し"], "battleSkillTable": {"戦士": {"格闘": "D", "短剣": "B-", "片手剣": "B", "両手剣": "B+", "片手斧": "A", "両手斧": "A+", "両手鎌": "B+", "両手槍": "B-", "片手刀": "-", "両手刀": "-", "片手棍": "B-", "両手棍": "B", "弓術": "D", "射撃": "D", "投てき": "D", "ガード": "-", "回避": "C", "盾": "C+", "受け流し": "C-"}, "モンク": {"格闘": "A+", "短剣": "-", "片手剣": "-", "両手剣": "-", "片手斧": "-", "両手斧": "-", "両手鎌": "-", "両手槍": "-", "片手刀": "-", "両手刀": "-", "片手棍": "C+", "両手棍": "B", "弓術": "-", "射撃": "-", "投てき": "E", "ガード": "A", "回避": "B+", "盾": "-", "受け流し": "E"}, "白魔道士": {"格闘": "-", "短剣": "-", "片手剣": "-", "両手剣": "-", "片手斧": "-", "両手斧": "-", "両手鎌": "-", "両手槍": "-", "片手刀": "-", "両手刀": "-", "片手棍": "B+", "両手棍": "C+", "弓術": "-", "射撃": "-", "投てき": "E", "ガード": "-", "回避": "E", "盾": "D", "受け流し": "-"}, "黒魔道士": {"格闘": "-", "短剣": "D", "片手剣": "-", "両手剣": "-", "片手斧": "-", "両手斧": "-", "両手鎌": "E", "両手槍": "-", "片手刀": "-", "両手刀": "-", "片手棍": "C+", "両手棍": "B-", "弓術": "-", "射撃": "-", "投てき": "D", "ガード": "-", "回避": "E", "盾": "-", "受け流し": "-"}, "赤魔道士": {"格闘": "-", "短剣": "B", "片手剣": "B", "両手剣": "-", "片手斧": "-", "両手斧": "-", "両手鎌": "-", "両手槍": "-", "片手刀": "-", "両手刀": "-", "片手棍": "D", "両手棍": "-", "弓術": "D", "射撃": "-", "投てき": "F", "ガード": "-", "回避": "D", "盾": "F", "受け流し": "E"}, "シーフ": {"格闘": "E", "短剣": "A+", "片手剣": "D", "両手剣": "-", "片手斧": "-", "両手斧": "-", "両手鎌": "-", "両手槍": "-", "片手刀": "-", "両手刀": "-", "片手棍": "E", "両手棍": "-", "弓術": "C-", "射撃": "C+", "投てき": "D", "ガード": "-", "回避": "A+", "盾": "F", "受け流し": "A"}, "ナイト": {"格闘": "-", "短剣": "C-", "片手剣": "A+", "両手剣": "B", "片手斧": "-", "両手斧": "-", "両手鎌": "-", "両手槍": "E", "片手刀": "-", "両手刀": "-", "片手棍": "A", "両手棍": "A", "弓術": "-", "射撃": "-", "投てき": "-", "ガード": "-", "回避": "C", "盾": "A+", "受け流し": "C"}, "暗黒騎士": {"格闘": "-", "短剣": "C", "片手剣": "B-", "両手剣": "A", "片手斧": "B-", "両手斧": "B-", "両手鎌": "A+", "両手槍": "-", "片手刀": "-", "両手刀": "-", "片手棍": "C-", "両手棍": "-", "弓術": "-", "射撃": "E", "投てき": "-", "ガード": "-", "回避": "C", "盾": "-", "受け流し": "E"}, "獣使い": {"格闘": "-", "短剣": "C+", "片手剣": "E", "両手剣": "-", "片手斧": "A+", "両手斧": "-", "両手鎌": "B-", "両手槍": "-", "片手刀": "-", "両手刀": "-", "片手棍": "D", "両手棍": "-", "弓術": "-", "射撃": "-", "投てき": "-", "ガード": "-", "回避": "C", "盾": "E", "受け流し": "C"}, "吟遊詩人": {"格闘": "-", "短剣": "B-", "片手剣": "C-", "両手剣": "-", "片手斧": "-", "両手斧": "-", "両手鎌": "-", "両手槍": "-", "片手刀": "-", "両手刀": "-", "片手棍": "D", "両手棍": "C+", "弓術": "-", "射撃": "-", "投てき": "E", "ガード": "-", "回避": "D", "盾": "-", "受け流し": "E"}, "狩人": {"格闘": "-", "短剣": "B-", "片手剣": "D", "両手剣": "-", "片手斧": "B-", "両手斧": "-", "両手鎌": "-", "両手槍": "-", "片手刀": "-", "両手刀": "-", "片手棍": "E", "両手棍": "-", "弓術": "A+", "射撃": "A+", "投てき": "C-", "ガード": "-", "回避": "E", "盾": "-", "受け流し": "-"}, "侍": {"格闘": "-", "短剣": "E", "片手剣": "C+", "両手剣": "-", "片手斧": "-", "両手斧": "-", "両手鎌": "-", "両手槍": "B-", "片手刀": "-", "両手刀": "A+", "片手棍": "E", "両手棍": "-", "弓術": "C+", "射撃": "-", "投てき": "C+", "ガード": "-", "回避": "B+", "盾": "-", "受け流し": "A"}, "忍者": {"格闘": "E", "短剣": "C+", "片手剣": "C", "両手剣": "-", "片手斧": "-", "両手斧": "-", "両手鎌": "-", "両手槍": "-", "片手刀": "A+", "両手刀": "C-", "片手棍": "E", "両手棍": "-", "弓術": "E", "射撃": "C", "投てき": "A+", "ガード": "-", "回避": "A", "盾": "-", "受け流し": "A"}, "竜騎士": {"格闘": "-", "短剣": "E", "片手剣": "C-", "両手剣": "-", "片手斧": "-", "両手斧": "-", "両手鎌": "-", "両手槍": "A+", "片手刀": "-", "両手刀": "-", "片手棍": "E", "両手棍": "B-", "弓術": "-", "射撃": "-", "投てき": "-", "ガード": "-", "回避": "C-", "盾": "-", "受け流し": "C"}, "召喚士": {"格闘": "-", "短剣": "E", "片手剣": "-", "両手剣": "-", "片手斧": "-", "両手斧": "-", "両手鎌": "-", "両手槍": "-", "片手刀": "-", "両手刀": "-", "片手棍": "C+", "両手棍": "B", "弓術": "-", "射撃": "-", "投てき": "-", "ガード": "-", "回避": "E", "盾": "-", "受け流し": "-"}, "青魔道士": {"格闘": "-", "短剣": "-", "片手剣": "A+", "両手剣": "-", "片手斧": "-", "両手斧": "-", "両手鎌": "-", "両手槍": "-", "片手刀": "-", "両手刀": "-", "片手棍": "B", "両手棍": "-", "弓術": "-", "射撃": "-", "投てき": "-", "ガード": "-", "回避": "C", "盾": "-", "受け流し": "D"}, "コルセア": {"格闘": "-", "短剣": "B+", "片手剣": "B-", "両手剣": "-", "片手斧": "-", "両手斧": "-", "両手鎌": "-", "両手槍": "-", "片手刀": "-", "両手刀": "-", "片手棍": "-", "両手棍": "-", "弓術": "-", "射撃": "B", "投てき": "C+", "ガード": "-", "回避": "D", "盾": "-", "受け流し": "A"}, "からくり士": {"格闘": "A+", "短剣": "C-", "片手剣": "-", "両手剣": "-", "片手斧": "-", "両手斧": "-", "両手鎌": "-", "両手槍": "-", "片手刀": "-", "両手刀": "-", "片手棍": "D", "両手棍": "-", "弓術": "-", "射撃": "-", "投てき": "C+", "ガード": "B", "回避": "B", "盾": "-", "受け流し": "D"}, "踊り子": {"格闘": "D", "短剣": "A+", "片手剣": "D", "両手剣": "-", "片手斧": "-", "両手斧": "-", "両手鎌": "-", "両手槍": "-", "片手刀": "-", "両手刀": "-", "片手棍": "-", "両手棍": "-", "弓術": "-", "射撃": "-", "投てき": "C+", "ガード": "-", "回避": "B+", "盾": "-", "受け流し": "B"}, "学者": {"格闘": "-", "短剣": "D", "片手剣": "-", "両手剣": "-", "片手斧": "-", "両手斧": "-", "両手鎌": "-", "両手槍": "-", "片手刀": "-", "両手刀": "-", "片手棍": "C+", "両手棍": "C+", "弓術": "-", "射撃": "-", "投てき": "D", "ガード": "-", "回避": "E", "盾": "-", "受け流し": "E"}, "魔導剣士": {"格闘": "-", "短剣": "C-", "片手剣": "-", "両手剣": "-", "片手斧": "-", "両手斧": "-", "両手鎌": "-", "両手槍": "-", "片手刀": "-", "両手刀": "-", "片手棍": "B+", "両手棍": "C+", "弓術": "-", "射撃": "-", "投てき": "-", "ガード": "-", "回避": "D", "盾": "-", "受け流し": "E"}, "風水士": {"格闘": "-", "短剣": "-", "片手剣": "A", "両手剣": "A+", "片手斧": "B-", "両手斧": "B", "両手鎌": "-", "両手槍": "-", "片手刀": "-", "両手刀": "-", "片手棍": "C-", "両手棍": "-", "弓術": "-", "射撃": "-", "投てき": "-", "ガード": "-", "回避": "B+", "盾": "-", "受け流し": "A+"}}, "battleSkillCaps": {"-": {"skilcap": 0, "byLevel": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, "G": {"skilcap": 228, "byLevel": [99, 101, 105, 109, 113, 117, 121, 125, 129, 133, 137]}, "F": {"skilcap": 265, "byLevel": [114, 116, 120, 124, 128, 133, 137, 141, 146, 150, 154]}, "E": {"skilcap": 300, "byLevel": [124, 126, 130, 135, 139, 144, 148, 153, 157, 162, 166]}, "D": {"skilcap": 334, "byLevel": [133, 136, 140, 145, 150, 154, 159, 164, 168, 173, 178]}, "C-": {"skilcap": 368, "byLevel": [139, 142, 146, 151, 156, 161, 166, 170, 175, 180, 185]}, "C": {"skilcap": 373, "byLevel": [139, 142, 146, 151, 156, 161, 166, 170, 175, 180, 185]}, "C+": {"skilcap": 378, "byLevel": [139, 142, 146, 151, 156, 161, 166, 170, 175, 180, 185]}, "B-": {"skilcap": 388, "byLevel": [144, 147, 151, 156, 161, 166, 171, 176, 181, 186, 191]}, "B": {"skilcap": 398, "byLevel": [144, 147, 151, 156, 161, 166, 171, 176, 181, 186, 191]}, "B+": {"skilcap": 404, "byLevel": [144, 147, 151, 156, 161, 166, 171, 176, 181, 186, 191]}, "A": {"skilcap": 417, "byLevel": [150, 153, 158, 163, 168, 173, 178, 183, 188, 193, 198]}, "A+": {"skilcap": 424, "byLevel": [150, 153, 158, 163, 168, 173, 178, 183, 188, 193, 198]}}, "magicOrder": ["神聖魔法", "回復魔法", "強化魔法", "弱体魔法", "精霊魔法", "暗黒魔法", "召喚魔法", "青魔法", "歌唱", "管楽", "弦楽", "忍術", "風水魔法", "風水鈴"], "magicSkillTable": {"戦士": {"神聖魔法": "-", "回復魔法": "-", "強化魔法": "-", "弱体魔法": "-", "精霊魔法": "-", "暗黒魔法": "-", "召喚魔法": "-", "青魔法": "-", "歌唱": "-", "管楽": "-", "弦楽": "-", "忍術": "-", "風水魔法": "-", "風水鈴": "-"}, "モンク": {"神聖魔法": "-", "回復魔法": "-", "強化魔法": "-", "弱体魔法": "-", "精霊魔法": "-", "暗黒魔法": "-", "召喚魔法": "-", "青魔法": "-", "歌唱": "-", "管楽": "-", "弦楽": "-", "忍術": "-", "風水魔法": "-", "風水鈴": "-"}, "白魔道士": {"神聖魔法": "A", "回復魔法": "A+", "強化魔法": "C+", "弱体魔法": "C", "精霊魔法": "-", "暗黒魔法": "-", "召喚魔法": "-", "青魔法": "-", "歌唱": "-", "管楽": "-", "弦楽": "-", "忍術": "-", "風水魔法": "-", "風水鈴": "-"}, "黒魔道士": {"神聖魔法": "-", "回復魔法": "-", "強化魔法": "E", "弱体魔法": "C+", "精霊魔法": "A+", "暗黒魔法": "A", "召喚魔法": "-", "青魔法": "-", "歌唱": "-", "管楽": "-", "弦楽": "-", "忍術": "-", "風水魔法": "-", "風水鈴": "-"}, "赤魔道士": {"神聖魔法": "E", "回復魔法": "C-", "強化魔法": "B+", "弱体魔法": "A+", "精霊魔法": "C+", "暗黒魔法": "E", "召喚魔法": "-", "青魔法": "-", "歌唱": "-", "管楽": "-", "弦楽": "-", "忍術": "-", "風水魔法": "-", "風水鈴": "-"}, "シーフ": {"神聖魔法": "-", "回復魔法": "-", "強化魔法": "-", "弱体魔法": "-", "精霊魔法": "-", "暗黒魔法": "-", "召喚魔法": "-", "青魔法": "-", "歌唱": "-", "管楽": "-", "弦楽": "-", "忍術": "-", "風水魔法": "-", "風水鈴": "-"}, "ナイト": {"神聖魔法": "B+", "回復魔法": "C", "強化魔法": "D", "弱体魔法": "-", "精霊魔法": "-", "暗黒魔法": "-", "召喚魔法": "-", "青魔法": "-", "歌唱": "-", "管楽": "-", "弦楽": "-", "忍術": "-", "風水魔法": "-", "風水鈴": "-"}, "暗黒騎士": {"神聖魔法": "-", "回復魔法": "-", "強化魔法": "-", "弱体魔法": "C", "精霊魔法": "B+", "暗黒魔法": "A", "召喚魔法": "-", "青魔法": "-", "歌唱": "-", "管楽": "-", "弦楽": "-", "忍術": "-", "風水魔法": "-", "風水鈴": "-"}, "獣使い": {"神聖魔法": "-", "回復魔法": "-", "強化魔法": "-", "弱体魔法": "-", "精霊魔法": "-", "暗黒魔法": "-", "召喚魔法": "-", "青魔法": "-", "歌唱": "-", "管楽": "-", "弦楽": "-", "忍術": "-", "風水魔法": "-", "風水鈴": "-"}, "吟遊詩人": {"神聖魔法": "-", "回復魔法": "-", "強化魔法": "-", "弱体魔法": "-", "精霊魔法": "-", "暗黒魔法": "-", "召喚魔法": "-", "青魔法": "-", "歌唱": "C", "管楽": "C", "弦楽": "C", "忍術": "-", "風水魔法": "-", "風水鈴": "-"}, "狩人": {"神聖魔法": "-", "回復魔法": "-", "強化魔法": "-", "弱体魔法": "-", "精霊魔法": "-", "暗黒魔法": "-", "召喚魔法": "-", "青魔法": "-", "歌唱": "-", "管楽": "-", "弦楽": "-", "忍術": "-", "風水魔法": "-", "風水鈴": "-"}, "侍": {"神聖魔法": "-", "回復魔法": "-", "強化魔法": "-", "弱体魔法": "-", "精霊魔法": "-", "暗黒魔法": "-", "召喚魔法": "-", "青魔法": "-", "歌唱": "-", "管楽": "-", "弦楽": "-", "忍術": "-", "風水魔法": "-", "風水鈴": "-"}, "忍者": {"神聖魔法": "-", "回復魔法": "-", "強化魔法": "-", "弱体魔法": "-", "精霊魔法": "-", "暗黒魔法": "-", "召喚魔法": "-", "青魔法": "-", "歌唱": "-", "管楽": "-", "弦楽": "-", "忍術": "A", "風水魔法": "-", "風水鈴": "-"}, "竜騎士": {"神聖魔法": "-", "回復魔法": "-", "強化魔法": "-", "弱体魔法": "-", "精霊魔法": "-", "暗黒魔法": "-", "召喚魔法": "-", "青魔法": "-", "歌唱": "-", "管楽": "-", "弦楽": "-", "忍術": "-", "風水魔法": "-", "風水鈴": "-"}, "召喚士": {"神聖魔法": "-", "回復魔法": "-", "強化魔法": "-", "弱体魔法": "-", "精霊魔法": "-", "暗黒魔法": "-", "召喚魔法": "A", "青魔法": "-", "歌唱": "-", "管楽": "-", "弦楽": "-", "忍術": "-", "風水魔法": "-", "風水鈴": "-"}, "青魔道士": {"神聖魔法": "-", "回復魔法": "-", "強化魔法": "-", "弱体魔法": "-", "精霊魔法": "-", "暗黒魔法": "-", "召喚魔法": "-", "青魔法": "A+", "歌唱": "-", "管楽": "-", "弦楽": "-", "忍術": "-", "風水魔法": "-", "風水鈴": "-"}, "コルセア": {"神聖魔法": "-", "回復魔法": "-", "強化魔法": "-", "弱体魔法": "-", "精霊魔法": "-", "暗黒魔法": "-", "召喚魔法": "-", "青魔法": "-", "歌唱": "-", "管楽": "-", "弦楽": "-", "忍術": "-", "風水魔法": "-", "風水鈴": "-"}, "からくり士": {"神聖魔法": "-", "回復魔法": "-", "強化魔法": "-", "弱体魔法": "-", "精霊魔法": "-", "暗黒魔法": "-", "召喚魔法": "-", "青魔法": "-", "歌唱": "-", "管楽": "-", "弦楽": "-", "忍術": "-", "風水魔法": "-", "風水鈴": "-"}, "踊り子": {"神聖魔法": "-", "回復魔法": "-", "強化魔法": "-", "弱体魔法": "-", "精霊魔法": "-", "暗黒魔法": "-", "召喚魔法": "-", "青魔法": "-", "歌唱": "-", "管楽": "-", "弦楽": "-", "忍術": "-", "風水魔法": "-", "風水鈴": "-"}, "学者": {"神聖魔法": "B+", "回復魔法": "B+", "強化魔法": "B+", "弱体魔法": "B+", "精霊魔法": "B+", "暗黒魔法": "B+", "召喚魔法": "-", "青魔法": "-", "歌唱": "-", "管楽": "-", "弦楽": "-", "忍術": "-", "風水魔法": "-", "風水鈴": "-"}, "魔導剣士": {"神聖魔法": "B", "回復魔法": "-", "強化魔法": "B-", "弱体魔法": "-", "精霊魔法": "-", "暗黒魔法": "-", "召喚魔法": "-", "青魔法": "-", "歌唱": "-", "管楽": "-", "弦楽": "-", "忍術": "-", "風水魔法": "-", "風水鈴": "-"}, "風水士": {"神聖魔法": "-", "回復魔法": "-", "強化魔法": "-", "弱体魔法": "C+", "精霊魔法": "B+", "暗黒魔法": "C+", "召喚魔法": "-", "青魔法": "-", "歌唱": "-", "管楽": "-", "弦楽": "-", "忍術": "-", "風水魔法": "C", "風水鈴": "C"}}, "magicSkillCaps": {"-": {"skilcap": 0, "byLevel": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, "G": {"skilcap": 228, "byLevel": [99, 101, 105, 109, 113, 117, 121, 125, 129, 133, 137]}, "F": {"skilcap": 265, "byLevel": [114, 116, 120, 124, 128, 133, 137, 141, 146, 150, 154]}, "E": {"skilcap": 300, "byLevel": [124, 126, 130, 135, 139, 144, 148, 153, 157, 162, 166]}, "D": {"skilcap": 334, "byLevel": [133, 136, 140, 145, 150, 154, 159, 164, 168, 173, 178]}, "C-": {"skilcap": 368, "byLevel": [139, 142, 146, 151, 156, 161, 166, 170, 175, 180, 185]}, "C": {"skilcap": 373, "byLevel": [139, 142, 146, 151, 156, 161, 166, 170, 175, 180, 185]}, "C+": {"skilcap": 378, "byLevel": [139, 142, 146, 151, 156, 161, 166, 170, 175, 180, 185]}, "B-": {"skilcap": 388, "byLevel": [144, 147, 151, 156, 161, 166, 171, 176, 181, 186, 191]}, "B": {"skilcap": 398, "byLevel": [144, 147, 151, 156, 161, 166, 171, 176, 181, 186, 191]}, "B+": {"skilcap": 404, "byLevel": [144, 147, 151, 156, 161, 166, 171, 176, 181, 186, 191]}, "A": {"skilcap": 417, "byLevel": [150, 153, 158, 163, 168, 173, 178, 183, 188, 193, 198]}, "A+": {"skilcap": 424, "byLevel": [150, 153, 158, 163, 168, 173, 178, 183, 188, 193, 198]}}, "jobTrait": {"戦士": {"magicAtk": 100, "magicDmg": 0, "mbBonus": 130, "skillBonus": {"神聖魔法": 0, "回復魔法": 0, "強化魔法": 0, "弱体魔法": 0, "精霊魔法": 0, "暗黒魔法": 0, "召喚魔法": 0, "青魔法": 0, "歌唱": 0, "管楽": 0, "弦楽": 0, "忍術": 0, "風水魔法": 0, "風水鈴": 0}}, "モンク": {"magicAtk": 100, "magicDmg": 0, "mbBonus": 130, "skillBonus": {"神聖魔法": 0, "回復魔法": 0, "強化魔法": 0, "弱体魔法": 0, "精霊魔法": 0, "暗黒魔法": 0, "召喚魔法": 0, "青魔法": 0, "歌唱": 0, "管楽": 0, "弦楽": 0, "忍術": 0, "風水魔法": 0, "風水鈴": 0}}, "白魔道士": {"magicAtk": 120, "magicDmg": 0, "mbBonus": 130, "skillBonus": {"神聖魔法": 36, "回復魔法": 36, "強化魔法": 0, "弱体魔法": 0, "精霊魔法": 0, "暗黒魔法": 0, "召喚魔法": 0, "青魔法": 0, "歌唱": 0, "管楽": 0, "弦楽": 0, "忍術": 0, "風水魔法": 0, "風水鈴": 0}}, "黒魔道士": {"magicAtk": 190, "magicDmg": 43, "mbBonus": 186, "skillBonus": {"神聖魔法": 0, "回復魔法": 0, "強化魔法": 0, "弱体魔法": 0, "精霊魔法": 36, "暗黒魔法": 36, "召喚魔法": 0, "青魔法": 0, "歌唱": 0, "管楽": 0, "弦楽": 0, "忍術": 0, "風水魔法": 0, "風水鈴": 0}}, "赤魔道士": {"magicAtk": 176, "magicDmg": 0, "mbBonus": 137, "skillBonus": {"神聖魔法": 0, "回復魔法": 0, "強化魔法": 36, "弱体魔法": 36, "精霊魔法": 0, "暗黒魔法": 0, "召喚魔法": 0, "青魔法": 0, "歌唱": 0, "管楽": 0, "弦楽": 0, "忍術": 0, "風水魔法": 0, "風水鈴": 0}}, "シーフ": {"magicAtk": 100, "magicDmg": 0, "mbBonus": 130, "skillBonus": {"神聖魔法": 0, "回復魔法": 0, "強化魔法": 0, "弱体魔法": 0, "精霊魔法": 0, "暗黒魔法": 0, "召喚魔法": 0, "青魔法": 0, "歌唱": 0, "管楽": 0, "弦楽": 0, "忍術": 0, "風水魔法": 0, "風水鈴": 0}}, "ナイト": {"magicAtk": 100, "magicDmg": 0, "mbBonus": 130, "skillBonus": {"神聖魔法": 36, "回復魔法": 0, "強化魔法": 0, "弱体魔法": 0, "精霊魔法": 0, "暗黒魔法": 0, "召喚魔法": 0, "青魔法": 0, "歌唱": 0, "管楽": 0, "弦楽": 0, "忍術": 0, "風水魔法": 0, "風水鈴": 0}}, "暗黒騎士": {"magicAtk": 100, "magicDmg": 0, "mbBonus": 130, "skillBonus": {"神聖魔法": 0, "回復魔法": 0, "強化魔法": 0, "弱体魔法": 0, "精霊魔法": 0, "暗黒魔法": 36, "召喚魔法": 0, "青魔法": 0, "歌唱": 0, "管楽": 0, "弦楽": 0, "忍術": 0, "風水魔法": 0, "風水鈴": 0}}, "獣使い": {"magicAtk": 100, "magicDmg": 0, "mbBonus": 130, "skillBonus": {"神聖魔法": 0, "回復魔法": 0, "強化魔法": 0, "弱体魔法": 0, "精霊魔法": 0, "暗黒魔法": 0, "召喚魔法": 0, "青魔法": 0, "歌唱": 0, "管楽": 0, "弦楽": 0, "忍術": 0, "風水魔法": 0, "風水鈴": 0}}, "吟遊詩人": {"magicAtk": 100, "magicDmg": 0, "mbBonus": 130, "skillBonus": {"神聖魔法": 0, "回復魔法": 0, "強化魔法": 0, "弱体魔法": 0, "精霊魔法": 0, "暗黒魔法": 0, "召喚魔法": 0, "青魔法": 0, "歌唱": 36, "管楽": 36, "弦楽": 36, "忍術": 0, "風水魔法": 0, "風水鈴": 0}}, "狩人": {"magicAtk": 100, "magicDmg": 0, "mbBonus": 130, "skillBonus": {"神聖魔法": 0, "回復魔法": 0, "強化魔法": 0, "弱体魔法": 0, "精霊魔法": 0, "暗黒魔法": 0, "召喚魔法": 0, "青魔法": 0, "歌唱": 0, "管楽": 0, "弦楽": 0, "忍術": 0, "風水魔法": 0, "風水鈴": 0}}, "侍": {"magicAtk": 100, "magicDmg": 0, "mbBonus": 130, "skillBonus": {"神聖魔法": 0, "回復魔法": 0, "強化魔法": 0, "弱体魔法": 0, "精霊魔法": 0, "暗黒魔法": 0, "召喚魔法": 0, "青魔法": 0, "歌唱": 0, "管楽": 0, "弦楽": 0, "忍術": 0, "風水魔法": 0, "風水鈴": 0}}, "忍者": {"magicAtk": 148, "magicDmg": 40, "mbBonus": 137, "skillBonus": {"神聖魔法": 0, "回復魔法": 0, "強化魔法": 0, "弱体魔法": 0, "精霊魔法": 0, "暗黒魔法": 0, "召喚魔法": 0, "青魔法": 0, "歌唱": 0, "管楽": 0, "弦楽": 0, "忍術": 36, "風水魔法": 0, "風水鈴": 0}}, "竜騎士": {"magicAtk": 100, "magicDmg": 0, "mbBonus": 130, "skillBonus": {"神聖魔法": 0, "回復魔法": 0, "強化魔法": 0, "弱体魔法": 0, "精霊魔法": 0, "暗黒魔法": 0, "召喚魔法": 0, "青魔法": 0, "歌唱": 0, "管楽": 0, "弦楽": 0, "忍術": 0, "風水魔法": 0, "風水鈴": 0}}, "召喚士": {"magicAtk": 136, "magicDmg": 0, "mbBonus": 130, "skillBonus": {"神聖魔法": 0, "回復魔法": 0, "強化魔法": 0, "弱体魔法": 0, "精霊魔法": 0, "暗黒魔法": 0, "召喚魔法": 36, "青魔法": 0, "歌唱": 0, "管楽": 0, "弦楽": 0, "忍術": 0, "風水魔法": 0, "風水鈴": 0}}, "青魔道士": {"magicAtk": 176, "magicDmg": 0, "mbBonus": 130, "skillBonus": {"神聖魔法": 0, "回復魔法": 0, "強化魔法": 0, "弱体魔法": 0, "精霊魔法": 0, "暗黒魔法": 0, "召喚魔法": 0, "青魔法": 36, "歌唱": 0, "管楽": 0, "弦楽": 0, "忍術": 0, "風水魔法": 0, "風水鈴": 0}}, "コルセア": {"magicAtk": 114, "magicDmg": 0, "mbBonus": 130, "skillBonus": {"神聖魔法": 0, "回復魔法": 0, "強化魔法": 0, "弱体魔法": 0, "精霊魔法": 0, "暗黒魔法": 0, "召喚魔法": 0, "青魔法": 0, "歌唱": 0, "管楽": 0, "弦楽": 0, "忍術": 0, "風水魔法": 0, "風水鈴": 0}}, "からくり士": {"magicAtk": 136, "magicDmg": 0, "mbBonus": 130, "skillBonus": {"神聖魔法": 0, "回復魔法": 0, "強化魔法": 0, "弱体魔法": 0, "精霊魔法": 0, "暗黒魔法": 0, "召喚魔法": 0, "青魔法": 0, "歌唱": 0, "管楽": 0, "弦楽": 0, "忍術": 0, "風水魔法": 0, "風水鈴": 0}}, "踊り子": {"magicAtk": 100, "magicDmg": 0, "mbBonus": 130, "skillBonus": {"神聖魔法": 0, "回復魔法": 0, "強化魔法": 0, "弱体魔法": 0, "精霊魔法": 0, "暗黒魔法": 0, "召喚魔法": 0, "青魔法": 0, "歌唱": 0, "管楽": 0, "弦楽": 0, "忍術": 0, "風水魔法": 0, "風水鈴": 0}}, "学者": {"magicAtk": 136, "magicDmg": 0, "mbBonus": 152, "skillBonus": {"神聖魔法": 0, "回復魔法": 36, "強化魔法": 36, "弱体魔法": 0, "精霊魔法": 36, "暗黒魔法": 36, "召喚魔法": 0, "青魔法": 0, "歌唱": 0, "管楽": 0, "弦楽": 0, "忍術": 0, "風水魔法": 0, "風水鈴": 0}}, "風水士": {"magicAtk": 162, "magicDmg": 13, "mbBonus": 130, "skillBonus": {"神聖魔法": 0, "回復魔法": 0, "強化魔法": 0, "弱体魔法": 0, "精霊魔法": 0, "暗黒魔法": 0, "召喚魔法": 0, "青魔法": 0, "歌唱": 0, "管楽": 0, "弦楽": 0, "忍術": 0, "風水魔法": 36, "風水鈴": 36}}, "魔導剣士": {"magicAtk": 100, "magicDmg": 0, "mbBonus": 130, "skillBonus": {"神聖魔法": 0, "回復魔法": 0, "強化魔法": 36, "弱体魔法": 0, "精霊魔法": 0, "暗黒魔法": 0, "召喚魔法": 0, "青魔法": 0, "歌唱": 0, "管楽": 0, "弦楽": 0, "忍術": 0, "風水魔法": 0, "風水鈴": 0}}}, "jobTraitSupport": {"戦士": {"49": 0, "50": 0}, "モンク": {"49": 0, "50": 0}, "白魔道士": {"49": 0, "50": 0}, "黒魔道士": {"49": 24, "50": 28}, "赤魔道士": {"49": 24, "50": 24}, "シーフ": {"49": 0, "50": 0}, "ナイト": {"49": 0, "50": 0}, "暗黒騎士": {"49": 0, "50": 0}, "獣使い": {"49": 0, "50": 0}, "吟遊詩人": {"49": 0, "50": 0}, "狩人": {"49": 0, "50": 0}, "侍": {"49": 0, "50": 0}, "忍者": {"49": 0, "50": 0}, "竜騎士": {"49": 0, "50": 0}, "召喚士": {"49": 0, "50": 0}, "青魔道士": {"49": 0, "50": 0}, "コルセア": {"49": 0, "50": 0}, "からくり士": {"49": 0, "50": 0}, "踊り子": {"49": 0, "50": 0}, "学者": {"49": 0, "50": 0}, "風水士": {"49": 0, "50": 0}, "魔導剣士": {"49": 0, "50": 0}}, "spells": [{"name": "ストーン", "base": 10, "mults": [2, 1, null, null, null, null, null]}, {"name": "ストーンII", "base": 100, "mults": [3, 2, 1, null, null, null, null]}, {"name": "ストーンIII", "base": 200, "mults": [4, 3, 2, 1, null, null, null]}, {"name": "ストーンIV", "base": 400, "mults": [5, 4, 3, 2, 1, null, null]}, {"name": "ストーンV", "base": 650, "mults": [6, 5, 4, 3, 2, 1, null]}, {"name": "ストーンVI", "base": 950, "mults": [7, 6, 5, 4, 3, 2, 1]}, {"name": "ストンガ", "base": 60, "mults": [3, 2, 1, null, null, null, null]}, {"name": "ストンガII", "base": 250, "mults": [4, 3, 2, 1, null, null, null]}, {"name": "ストンガIII", "base": 500, "mults": [5, 4, 3, 2, 1, null, null]}, {"name": "ストンジャ", "base": 750, "mults": [6, 5, 4, 3, 2, 1, null]}, {"name": "クエイク", "base": 700, "mults": [2, 2, 2, 2, 2, 2, 2]}, {"name": "クエイクII", "base": 800, "mults": [2, 2, 2, 2, 2, 2, 2]}, {"name": "ウォータ", "base": 25, "mults": [1.8, 1, null, null, null, null, null]}, {"name": "ウォータII", "base": 120, "mults": [2.8, 1.9, 1, null, null, null, null]}, {"name": "ウォータIII", "base": 230, "mults": [3.7, 2.9, 1.95, 1, null, null, null]}, {"name": "ウォータIV", "base": 440, "mults": [4.7, 3.9, 2.95, 1.99, 1, null, null]}, {"name": "ウォータV", "base": 700, "mults": [5.6, 4.74, 3.95, 2.99, 1.99, 1, null]}, {"name": "ウォータVI", "base": 1010, "mults": [6.5, 5.9, 4.9, 3.9, 2.95, 1.99, 1]}, {"name": "ウォタガ", "base": 80, "mults": [2.8, 1.9, 1, null, null, null, null]}, {"name": "ウォタガII", "base": 280, "mults": [3.7, 2.9, 1.95, 1, null, null, null]}, {"name": "ウォタガIII", "base": 540, "mults": [4.7, 3.9, 2.95, 1.99, 1, null, null]}, {"name": "ウォタジャ", "base": 800, "mults": [5.6, 4.74, 3.95, 2.99, 1.99, 1, null]}, {"name": "フラッド", "base": 700, "mults": [2, 2, 2, 2, 2, 2, 2]}, {"name": "フラッドII", "base": 800, "mults": [2, 2, 2, 2, 2, 2, 2]}, {"name": "エアロ", "base": 40, "mults": [1.6, 1, null, null, null, null, null]}, {"name": "エアロII", "base": 140, "mults": [2.6, 1.8, 1, null, null, null, null]}, {"name": "エアロIII", "base": 260, "mults": [3.4, 2.8, 1.9, 1, null, null, null]}, {"name": "エアロIV", "base": 480, "mults": [4.4, 3.8, 2.9, 1.98, 1, null, null]}, {"name": "エアロV", "base": 750, "mults": [5.2, 4.5, 3.9, 2.98, 1.98, 1, null]}, {"name": "エアロVI", "base": 1070, "mults": [6, 5.8, 4.8, 3.8, 2.9, 1.98, 1]}, {"name": "エアロガ", "base": 100, "mults": [2.6, 1.8, 1, null, null, null, null]}, {"name": "エアロガII", "base": 310, "mults": [3.4, 2.8, 1.9, 1, null, null, null]}, {"name": "エアロガIII", "base": 580, "mults": [4.4, 3.8, 2.9, 1.98, 1, null, null]}, {"name": "エアロジャ", "base": 800, "mults": [5.2, 4.5, 3.9, 2.98, 1.98, 1, null]}, {"name": "トルネド", "base": 700, "mults": [2, 2, 2, 2, 2, 2, 2]}, {"name": "トルネドII", "base": 800, "mults": [2, 2, 2, 2, 2, 2, 2]}, {"name": "ファイア", "base": 55, "mults": [1.4, 1, null, null, null, null, null]}, {"name": "ファイアII", "base": 160, "mults": [2.4, 1.7, 1, null, null, null, null]}, {"name": "ファイアIII", "base": 290, "mults": [3.1, 2.7, 1.85, 1, null, null, null]}, {"name": "ファイアIV", "base": 520, "mults": [4.2, 3.7, 2.85, 1.97, 1, null, null]}, {"name": "ファイアV", "base": 800, "mults": [4.8, 4.24, 3.85, 2.97, 1.97, 1, null]}, {"name": "ファイアVI", "base": 1130, "mults": [5.5, 5.7, 4.7, 3.7, 2.85, 1.97, 1]}, {"name": "ファイガ", "base": 120, "mults": [2.4, 1.7, 1, null, null, null, null]}, {"name": "ファイガII", "base": 340, "mults": [3.1, 2.7, 1.85, 1, null, null, null]}, {"name": "ファイガIII", "base": 620, "mults": [4.2, 3.7, 2.85, 1.97, 1, null, null]}, {"name": "ファイジャ", "base": 900, "mults": [4.8, 4.24, 3.85, 2.97, 1.97, 1, null]}, {"name": "フレア", "base": 700, "mults": [2, 2, 2, 2, 2, 2, 2]}, {"name": "フレアII", "base": 800, "mults": [2, 2, 2, 2, 2, 2, 2]}, {"name": "ブリザド", "base": 70, "mults": [1.2, 1, null, null, null, null, null]}, {"name": "ブリザドII", "base": 180, "mults": [2.2, 1.6, 1, null, null, null, null]}, {"name": "ブリザドIII", "base": 320, "mults": [2.8, 2.6, 1.8, 1, null, null, null]}, {"name": "ブリザドIV", "base": 560, "mults": [3.9, 3.6, 2.8, 1.96, 1, null, null]}, {"name": "ブリザドV", "base": 850, "mults": [4.4, 4, 3.8, 2.96, 1.96, 1, null]}, {"name": "ブリザドVI", "base": 1190, "mults": [5, 5.6, 4.6, 3.6, 2.8, 1.96, 1]}, {"name": "ブリザガ", "base": 160, "mults": [2.2, 1.6, 1, null, null, null, null]}, {"name": "ブリザガII", "base": 370, "mults": [2.8, 2.6, 1.8, 1, null, null, null]}, {"name": "ブリザガIII", "base": 660, "mults": [3.9, 3.6, 2.8, 1.96, 1, null, null]}, {"name": "ブリザジャ", "base": 800, "mults": [4.4, 4, 3.8, 2.96, 1.96, 1, null]}, {"name": "フリーズ", "base": 700, "mults": [2, 2, 2, 2, 2, 2, 2]}, {"name": "フリーズII", "base": 800, "mults": [2, 2, 2, 2, 2, 2, 2]}, {"name": "サンダー", "base": 85, "mults": [1, 1, null, null, null, null, null]}, {"name": "サンダーII", "base": 200, "mults": [2, 1.5, 1, null, null, null, null]}, {"name": "サンダーIII", "base": 350, "mults": [2.5, 2.5, 1.75, 1, null, null, null]}, {"name": "サンダーIV", "base": 600, "mults": [3.6, 3.5, 2.75, 1.95, 1, null, null]}, {"name": "サンダーV", "base": 900, "mults": [4, 3.74, 3.75, 2.95, 1.95, 1, null]}, {"name": "サンダーVI", "base": 1250, "mults": [4.5, 5.5, 4.5, 3.5, 2.75, 1.95, 1]}, {"name": "サンダガ", "base": 200, "mults": [2, 1.5, 1, null, null, null, null]}, {"name": "サンダガII", "base": 400, "mults": [2.5, 2.5, 1.75, 1, null, null, null]}, {"name": "サンダガIII", "base": 700, "mults": [3.6, 3.5, 2.75, 1.95, 1, null, null]}, {"name": "サンダジャ", "base": 800, "mults": [4, 3.74, 3.75, 2.95, 1.95, 1, null]}, {"name": "バースト", "base": 700, "mults": [2, 2, 2, 2, 2, 2, 2]}, {"name": "バーストII", "base": 800, "mults": [2, 2, 2, 2, 2, 2, 2]}]};
+</script>
+<script>
+// ===== theme (published-page requirement: respect light/dark, but no extra work needed since CSS handles it) =====
+
+// ===== tab switching =====
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tabpanel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ===== populate selects =====
+const raceSel = document.getElementById('race');
+const mainJobSel = document.getElementById('mainJob');
+const supportJobSel = document.getElementById('supportJob');
+
+APPDATA.raceOrder.forEach(r=>{
+  const o = document.createElement('option'); o.value=r; o.textContent=r; raceSel.appendChild(o);
+});
+APPDATA.jobOrder.forEach(j=>{
+  const o1 = document.createElement('option'); o1.value=j; o1.textContent=j; mainJobSel.appendChild(o1);
+  const o2 = document.createElement('option'); o2.value=j; o2.textContent=j; supportJobSel.appendChild(o2);
+});
+raceSel.value = 'ヒューム';
+mainJobSel.value = '学者';
+supportJobSel.value = '赤魔道士';
+
+const mainLvInput = document.getElementById('mainLv');
+const mainLvOut = document.getElementById('mainLvOut');
+const slvOut = document.getElementById('slvOut');
+
+const STAT_NAMES = ['STR','DEX','VIT','AGI','INT','MND','CHR'];
+const MAGIC_NAMES = [
+  {key:'魔法攻撃力', label:'魔法攻撃力'},
+  {key:'魔法ダメージ', label:'魔法ダメージ'},
+  {key:'MBボーナス', label:'MB.ボーナス'},
+  {key:'MBボーナスII', label:'MB.ボーナスII'}
+];
+
+// build stat rows
+const statBody = document.getElementById('statBody');
+STAT_NAMES.forEach(name=>{
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td class="name">${name}</td><td class="base" id="base_${name}">-</td><td class="plus">+</td>
+    <td class="adjcell"><input type="number" class="adj" id="adj_${name}" value="0"></td><td class="eq">=</td>
+    <td class="total" id="total_${name}">-</td>`;
+  statBody.appendChild(tr);
+});
+
+const magicBody = document.getElementById('magicBody');
+MAGIC_NAMES.forEach(m=>{
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td class="name">${m.label}</td><td class="base" id="base_${m.key}">-</td><td class="plus">+</td>
+    <td class="adjcell"><input type="number" class="adj" id="adj_${m.key}" value="0"></td><td class="eq">=</td>
+    <td class="total" id="total_${m.key}">-</td>`;
+  magicBody.appendChild(tr);
+});
+
+// skill grids
+const battleGrid = document.getElementById('battleSkillGrid');
+const halfB = Math.ceil(APPDATA.weaponOrder.length/2);
+function buildSkillCols(container, names, prefix){
+  const colA = document.createElement('table');
+  const colB = document.createElement('table');
+  const half = Math.ceil(names.length/2);
+  names.forEach((name,i)=>{
+    const tbl = i<half ? colA : colB;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td class="sname">${name}</td><td class="sval" id="${prefix}_${name}">-</td>`;
+    tbl.appendChild(tr);
+  });
+  container.appendChild(colA);
+  container.appendChild(colB);
+}
+buildSkillCols(battleGrid, APPDATA.weaponOrder, 'bs');
+buildSkillCols(document.getElementById('magicSkillGrid'), APPDATA.magicOrder, 'ms');
+
+// ===== core calc helpers (mirrors Excel formulas exactly) =====
+function INT_(x){ return Math.trunc(x); } // Excel INT() truncates toward -Infinity, but all values here are positive so trunc works
+
+function calcSLV(mainLv){ return 49 + Math.floor(mainLv/5); }
+
+function statValue(statName, race, mainJob, supportJob, mainLv){
+  const D = APPDATA.races[race][statName];
+  const E = APPDATA.jobsStats[mainJob][statName];
+  const F = APPDATA.jobsStats[supportJob][statName];
+  const slv = calcSLV(mainLv);
+  const idx = APPDATA.statSupportCoefLevels.indexOf(slv);
+  const coefD = (APPDATA.statCoef[D]===undefined||APPDATA.statCoef[D]===null) ? 0 : APPDATA.statCoef[D];
+  const coefE = (APPDATA.statCoef[E]===undefined||APPDATA.statCoef[E]===null) ? 0 : APPDATA.statCoef[E];
+  const coefF_raw = (idx>=0 && APPDATA.statSupportCoef[F]) ? APPDATA.statSupportCoef[F][idx] : 0;
+  const coefF = (coefF_raw===undefined||coefF_raw===null) ? 0 : coefF_raw;
+  return INT_(coefD + coefE + coefF + mainLv + 15);
+}
+
+function battleSkillValue(weapon, mainJob, supportJob, mainLv){
+  const V = APPDATA.battleSkillTable[mainJob][weapon];
+  const W = APPDATA.battleSkillTable[supportJob][weapon];
+  const capV = APPDATA.battleSkillCaps[V].skilcap;
+  if (capV + 16 === 16){
+    const slv = calcSLV(mainLv);
+    const idx = APPDATA.statSupportCoefLevels.indexOf(slv);
+    const capW = (idx>=0) ? APPDATA.battleSkillCaps[W].byLevel[idx] : 0;
+    return (capW||0) + 16;
+  } else {
+    return capV + mainLv + 16;
+  }
+}
+
+function magicSkillValue(mtype, mainJob, supportJob, mainLv){
+  const V = APPDATA.magicSkillTable[mainJob][mtype];
+  const W = APPDATA.magicSkillTable[supportJob][mtype];
+  const capV = APPDATA.magicSkillCaps[V].skilcap;
+  let base;
+  if (capV + 16 === 16){
+    const slv = calcSLV(mainLv);
+    const idx = APPDATA.statSupportCoefLevels.indexOf(slv);
+    const capW = (idx>=0) ? APPDATA.magicSkillCaps[W].byLevel[idx] : 0;
+    base = (capW||0) + 16;
+  } else {
+    base = capV + mainLv + 16;
+  }
+  const bonus = (APPDATA.jobTrait[mainJob].skillBonus[mtype]) || 0;
+  return base + bonus;
+}
+
+function magicAtkBase(mainJob, supportJob, mainLv){
+  const jt = APPDATA.jobTrait[mainJob];
+  const slv = calcSLV(mainLv);
+  const supportLookupJob = (mainJob === '黒魔道士' || mainJob === '赤魔道士') ? '戦士' : supportJob;
+  const key = (slv <= 49) ? '49' : '50';
+  const supportVal = (APPDATA.jobTraitSupport[supportLookupJob] && APPDATA.jobTraitSupport[supportLookupJob][key]) || 0;
+  return jt.magicAtk + supportVal;
+}
+
+// ===== render tab 1 =====
+function renderCalc(){
+  const race = raceSel.value, mainJob = mainJobSel.value, supportJob = supportJobSel.value;
+  const mainLv = parseInt(mainLvInput.value,10);
+  mainLvOut.textContent = mainLv;
+  const slv = calcSLV(mainLv);
+  slvOut.textContent = slv;
+
+  STAT_NAMES.forEach(name=>{
+    const base = statValue(name, race, mainJob, supportJob, mainLv);
+    document.getElementById('base_'+name).textContent = base;
+    const adj = parseInt(document.getElementById('adj_'+name).value||'0',10);
+    document.getElementById('total_'+name).textContent = base + adj;
+  });
+
+  const matkBase = magicAtkBase(mainJob, supportJob, mainLv);
+  const mdmgBase = APPDATA.jobTrait[mainJob].magicDmg;
+  const mbBase = APPDATA.jobTrait[mainJob].mbBonus;
+  const mb2Base = 0;
+  const bases = {'魔法攻撃力':matkBase, '魔法ダメージ':mdmgBase, 'MBボーナス':mbBase, 'MBボーナスII':mb2Base};
+  MAGIC_NAMES.forEach(m=>{
+    document.getElementById('base_'+m.key).textContent = bases[m.key];
+    const adj = parseInt(document.getElementById('adj_'+m.key).value||'0',10);
+    document.getElementById('total_'+m.key).textContent = bases[m.key] + adj;
+  });
+
+  APPDATA.weaponOrder.forEach(w=>{
+    const v = battleSkillValue(w, mainJob, supportJob, mainLv);
+    const cell = document.getElementById('bs_'+w);
+    cell.textContent = v;
+    cell.classList.toggle('zero', v<=16);
+  });
+  APPDATA.magicOrder.forEach(mt=>{
+    const v = magicSkillValue(mt, mainJob, supportJob, mainLv);
+    const cell = document.getElementById('ms_'+mt);
+    cell.textContent = v;
+    cell.classList.toggle('zero', v<=16);
+  });
+
+  return {race, mainJob, supportJob, mainLv,
+    INT: statValue('INT', race, mainJob, supportJob, mainLv) + parseInt(document.getElementById('adj_INT').value||'0',10),
+    matk: matkBase + parseInt(document.getElementById('adj_魔法攻撃力').value||'0',10),
+    mdmg: mdmgBase + parseInt(document.getElementById('adj_魔法ダメージ').value||'0',10),
+    mb: mbBase + parseInt(document.getElementById('adj_MBボーナス').value||'0',10),
+    mb2: mb2Base + parseInt(document.getElementById('adj_MBボーナスII').value||'0',10)
+  };
+}
+
+[raceSel, mainJobSel, supportJobSel, mainLvInput].forEach(el=>el.addEventListener('input', ()=>{ lastCalc = renderCalc(); }));
+document.querySelectorAll('#statBody input, #magicBody input').forEach(el=>el.addEventListener('input', ()=>{ lastCalc = renderCalc(); }));
+
+let lastCalc = renderCalc();
+
+// ===== tab 2: damage simulator =====
+const simIds = ['s_selfInt','s_enemyInt','s_enemyMdef','s_selfMatk','s_mdmg',
+  's_mult_soujou','s_mult_affi','s_mult_mb1','s_mult_mb2','s_mult_resist',
+  's_mult_kyoyuu','s_mult_weather','s_mult_gambit','s_mult_shell','s_mult_kien'];
+
+const deltaIntOut = document.getElementById('deltaIntOut');
+const matkRatioOut = document.getElementById('matkRatioOut');
+const spellBody = document.getElementById('spellBody');
+
+// family grouping by stripping roman numeral / が/ジャ/ガ suffix pattern isn't trivial; group by base japanese root name explicitly
+const FAMILY_MAP = {
+  'ストーン':'土', 'ストンガ':'土', 'ストンジャ':'土', 'クエイク':'土',
+  'ファイア':'火', 'ファイガ':'火', 'ファイジャ':'火', 'フレア':'火',
+  'ウォータ':'水', 'ウォタガ':'水', 'ウォタジャ':'水', 'フラッド':'水',
+  'エアロ':'風', 'エアロガ':'風', 'エアロジャ':'風', 'トルネド':'風',
+  'ブリザド':'氷', 'ブリザガ':'氷', 'ブリザジャ':'氷', 'フリーズ':'氷',
+  'サンダー':'雷', 'サンダガ':'雷', 'サンダジャ':'雷', 'バースト':'雷'
+};
+function familyOf(name){
+  const stripped = name.replace(/VI|V|IV|III|II|I$/,'');
+  return FAMILY_MAP[stripped] || '他';
+}
+const FAMILY_ORDER = ['土','水','風','火','氷','雷'];
+
+let activeFamily = 'ALL';
+const spellFilterDiv = document.getElementById('spellFilter');
+const allBtn = document.createElement('button');
+allBtn.textContent = 'すべて'; allBtn.className='active';
+allBtn.addEventListener('click', ()=>{ activeFamily='ALL'; setActiveFilterBtn(allBtn); renderSpells(); });
+spellFilterDiv.appendChild(allBtn);
+function setActiveFilterBtn(btn){
+  spellFilterDiv.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+FAMILY_ORDER.forEach(fam=>{
+  const b = document.createElement('button');
+  b.textContent = fam;
+  b.addEventListener('click', ()=>{ activeFamily=fam; setActiveFilterBtn(b); renderSpells(); });
+  spellFilterDiv.appendChild(b);
+});
+
+function tierAmt(mult, cap, prevCap, delta){
+  if (mult===null || mult===undefined) return 0;
+  if (cap===50){
+    return delta>=50 ? mult*50 : mult*delta;
+  } else {
+    if (delta>=cap) return mult*(cap-prevCap);
+    if (delta-prevCap<0) return 0;
+    return mult*(delta-prevCap);
+  }
+}
+const CAPS = [50,100,200,300,400,500,600];
+
+function computeSpellDamage(spell, params){
+  let total = spell.base;
+  let prev = 0;
+  CAPS.forEach((cap,i)=>{
+    total += tierAmt(spell.mults[i], cap, prev, params.deltaInt);
+    prev = cap;
+  });
+  total += params.mdmg;
+  let val = total;
+  params.multChain.forEach(m=>{ val = Math.trunc(val*m); });
+  return val;
+}
+
+function getSimParams(){
+  const selfInt = parseFloat(document.getElementById('s_selfInt').value)||0;
+  const enemyInt = parseFloat(document.getElementById('s_enemyInt').value)||0;
+  const enemyMdef = parseFloat(document.getElementById('s_enemyMdef').value)||0;
+  const selfMatk = parseFloat(document.getElementById('s_selfMatk').value)||0;
+  const mdmg = parseFloat(document.getElementById('s_mdmg').value)||0;
+  const deltaInt = selfInt - enemyInt;
+  const matkRatio = enemyMdef!==0 ? (selfMatk/enemyMdef) : 0;
+  const multChain = [
+    parseFloat(document.getElementById('s_mult_soujou').value)||1,
+    parseFloat(document.getElementById('s_mult_affi').value)||1,
+    parseFloat(document.getElementById('s_mult_mb1').value)||1,
+    parseFloat(document.getElementById('s_mult_mb2').value)||1,
+    parseFloat(document.getElementById('s_mult_resist').value)||1,
+    parseFloat(document.getElementById('s_mult_kyoyuu').value)||1,
+    parseFloat(document.getElementById('s_mult_weather').value)||1,
+    parseFloat(document.getElementById('s_mult_gambit').value)||1,
+    matkRatio,
+    parseFloat(document.getElementById('s_mult_shell').value)||1,
+    parseFloat(document.getElementById('s_mult_kien').value)||1
+  ];
+  deltaIntOut.textContent = deltaInt;
+  matkRatioOut.textContent = matkRatio.toFixed(3);
+  return {deltaInt, mdmg, multChain};
+}
+
+function renderSpells(){
+  const params = getSimParams();
+  spellBody.innerHTML = '';
+  APPDATA.spells.forEach(sp=>{
+    const fam = familyOf(sp.name);
+    if (activeFamily!=='ALL' && fam!==activeFamily) return;
+    const dmg = computeSpellDamage(sp, params);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${sp.name}</td><td>${sp.base}</td><td class="dmg">${dmg.toLocaleString()}</td>`;
+    spellBody.appendChild(tr);
+  });
+}
+
+simIds.forEach(id=>{
+  const el = document.getElementById(id);
+  el.addEventListener('input', renderSpells);
+  el.addEventListener('change', renderSpells);
+});
+
+document.getElementById('syncBtn').addEventListener('click', ()=>{
+  lastCalc = renderCalc();
+  document.getElementById('s_selfInt').value = lastCalc.INT;
+  document.getElementById('s_selfMatk').value = lastCalc.matk;
+  document.getElementById('s_mdmg').value = lastCalc.mdmg;
+  document.getElementById('s_mult_mb2').value = (lastCalc.mb + lastCalc.mb2) / 100;
+  renderSpells();
+});
+
+renderSpells();
+
+</script>
+</body>
+</html>
