@@ -202,7 +202,22 @@ table.stat-table td{
   padding:6px 8px;
   border-bottom:1px solid var(--line);
 }
-table.stat-table td.name{color:var(--ink-dim); width:34%;}
+table.stat-table td.name{color:var(--ink-dim); width:34%; white-space:nowrap;}
+table.stat-table td.name .stat-abbr{
+  display:inline-block;
+  width:2.6em;
+  font-family:'SF Mono','Consolas','Menlo',monospace;
+  letter-spacing:1px;
+}
+table.stat-table td.name .rank-inline{
+  color:var(--ink-dim);
+  opacity:.55;
+  font-size:1em;
+  font-weight:400;
+  white-space:nowrap;
+  font-family:'SF Mono','Consolas','Menlo',monospace;
+  letter-spacing:1px;
+}
 table.stat-table td.total{
   font-family:var(--serif);
   font-weight:700;
@@ -211,7 +226,7 @@ table.stat-table td.total{
   width:20%;
 }
 table.stat-table input.adj{
-  width:64px;
+  width:48px;
   text-align:right;
   padding:4px 6px;
 }
@@ -230,6 +245,19 @@ table.stat-table td.plus, table.stat-table td.eq{
 .skillgrid table{flex:1 1 260px; min-width:240px; width:100%; border-collapse:collapse; font-size:.88rem;}
 .skillgrid td{padding:5px 4px;border-bottom:1px solid var(--line);}
 .skillgrid td.sname{color:var(--ink-dim);}
+.skillgrid td.sname .skill-abbr{
+  display:inline-block;
+  width:4.4em;
+}
+.skillgrid td.sname .rank-inline{
+  color:var(--ink-dim);
+  opacity:.55;
+  font-size:1em;
+  font-weight:400;
+  white-space:nowrap;
+  font-family:'SF Mono','Consolas','Menlo',monospace;
+  letter-spacing:1px;
+}
 .skillgrid td.sval{
   text-align:right;
   font-family:var(--serif);
@@ -504,10 +532,13 @@ footer.note{
     <h2>精霊魔法ダメージ一覧</h2>
     <div class="mult-toggles">
       <span class="mult-toggles-label">反映するボーナス:</span>
+      <label><input type="checkbox" id="t_soujou" class="toggle-cb">相乗効果</label>
       <label><input type="checkbox" id="t_mb1" class="toggle-cb">MBボーナス</label>
       <label><input type="checkbox" id="t_mb2" class="toggle-cb">MB.ボーナス</label>
+      <label><input type="checkbox" id="t_resist" class="toggle-cb">レジスト</label>
       <label><input type="checkbox" id="t_gambit" class="toggle-cb">ガンビット</label>
       <label><input type="checkbox" id="t_kyoyuu" class="toggle-cb">虚誘掩殺</label>
+      <label><input type="checkbox" id="t_kien" class="toggle-cb">気炎(魔法ダメージ+40)</label>
     </div>
     <div class="spell-filter" id="spellFilter"></div>
     <div class="spell-scroll">
@@ -575,8 +606,8 @@ const MAGIC_NAMES = [
 const statBody = document.getElementById('statBody');
 STAT_NAMES.forEach(name=>{
   const tr = document.createElement('tr');
-  tr.innerHTML = `<td class="name">${name}</td><td class="base" id="base_${name}">-</td><td class="plus">+</td>
-    <td class="adjcell"><input type="number" class="adj" id="adj_${name}" value="0"></td><td class="eq">=</td>
+  tr.innerHTML = `<td class="name"><span class="stat-abbr">${name}</span><span class="rank-inline" id="rank_${name}"></span></td><td class="base" id="base_${name}">-</td><td class="plus">+</td>
+    <td class="adjcell"><input type="text" inputmode="numeric" pattern="-?[0-9]*" class="adj" id="adj_${name}" value="0"></td><td class="eq">=</td>
     <td class="total" id="total_${name}">-</td>`;
   statBody.appendChild(tr);
 });
@@ -585,7 +616,7 @@ const magicBody = document.getElementById('magicBody');
 MAGIC_NAMES.forEach(m=>{
   const tr = document.createElement('tr');
   tr.innerHTML = `<td class="name">${m.label}</td><td class="base" id="base_${m.key}">-</td><td class="plus">+</td>
-    <td class="adjcell"><input type="number" class="adj" id="adj_${m.key}" value="0"></td><td class="eq">=</td>
+    <td class="adjcell"><input type="text" inputmode="numeric" pattern="-?[0-9]*" class="adj" id="adj_${m.key}" value="0"></td><td class="eq">=</td>
     <td class="total" id="total_${m.key}">-</td>`;
   magicBody.appendChild(tr);
 });
@@ -600,7 +631,7 @@ function buildSkillCols(container, names, prefix){
   names.forEach((name,i)=>{
     const tbl = i<half ? colA : colB;
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td class="sname">${name}</td><td class="sval" id="${prefix}_${name}">-</td>`;
+    tr.innerHTML = `<td class="sname"><span class="skill-abbr">${name}</span><span class="rank-inline" id="rk_${prefix}_${name}"></span></td><td class="sval" id="${prefix}_${name}">-</td>`;
     tbl.appendChild(tr);
   });
   container.appendChild(colA);
@@ -678,6 +709,10 @@ function renderCalc(){
   STAT_NAMES.forEach(name=>{
     const base = statValue(name, race, mainJob, supportJob, mainLv);
     document.getElementById('base_'+name).textContent = base;
+    const D = APPDATA.races[race][name];
+    const E = APPDATA.jobsStats[mainJob][name];
+    const F = APPDATA.jobsStats[supportJob][name];
+    document.getElementById('rank_'+name).textContent = ` | ${D}${E}${F}`;
     const adj = parseInt(document.getElementById('adj_'+name).value||'0',10);
     document.getElementById('total_'+name).textContent = base + adj;
   });
@@ -698,12 +733,18 @@ function renderCalc(){
     const cell = document.getElementById('bs_'+w);
     cell.textContent = v;
     cell.classList.toggle('zero', v<=16);
+    const V = APPDATA.battleSkillTable[mainJob][w];
+    const W = APPDATA.battleSkillTable[supportJob][w];
+    document.getElementById('rk_bs_'+w).textContent = ` | ${V}${W}`;
   });
   APPDATA.magicOrder.forEach(mt=>{
     const v = magicSkillValue(mt, mainJob, supportJob, mainLv);
     const cell = document.getElementById('ms_'+mt);
     cell.textContent = v;
     cell.classList.toggle('zero', v<=16);
+    const V = APPDATA.magicSkillTable[mainJob][mt];
+    const W = APPDATA.magicSkillTable[supportJob][mt];
+    document.getElementById('rk_ms_'+mt).textContent = ` | ${V}${W}`;
   });
 
   return {race, mainJob, supportJob, mainLv,
@@ -716,7 +757,23 @@ function renderCalc(){
 }
 
 [raceSel, mainJobSel, supportJobSel, mainLvInput].forEach(el=>el.addEventListener('input', ()=>{ lastCalc = renderCalc(); }));
-document.querySelectorAll('#statBody input, #magicBody input').forEach(el=>el.addEventListener('input', ()=>{ lastCalc = renderCalc(); }));
+document.querySelectorAll('#statBody input, #magicBody input').forEach(el=>{
+  el.addEventListener('input', ()=>{ lastCalc = renderCalc(); });
+  el.addEventListener('focus', ()=>{
+    if (el.value === '0'){
+      el.value = '';
+    } else {
+      const len = el.value.length;
+      setTimeout(()=>{ el.setSelectionRange(len, len); }, 0);
+    }
+  });
+  el.addEventListener('blur', ()=>{
+    if (el.value === '' || el.value === '-'){
+      el.value = '0';
+      lastCalc = renderCalc();
+    }
+  });
+});
 
 let lastCalc = renderCalc();
 
@@ -796,22 +853,24 @@ function getSimParams(){
   const enemyInt = parseFloat(document.getElementById('s_enemyInt').value)||0;
   const enemyMdef = parseFloat(document.getElementById('s_enemyMdef').value)||0;
   const selfMatk = parseFloat(document.getElementById('s_selfMatk').value)||0;
-  const mdmg = parseFloat(document.getElementById('s_mdmg').value)||0;
+  let mdmg = parseFloat(document.getElementById('s_mdmg').value)||0;
+  const kienOn = document.getElementById('t_kien').checked;
+  if (kienOn) mdmg += 40;
   const deltaInt = selfInt - enemyInt;
   const matkRatio = enemyMdef!==0 ? (selfMatk/enemyMdef) : 0;
   const multChain = [
-    parseFloat(document.getElementById('s_mult_soujou').value)||1,
+    toggledValue('s_mult_soujou','t_soujou'),
     parseFloat(document.getElementById('s_mult_zokusei').value)||1,
     parseFloat(document.getElementById('s_mult_affi').value)||1,
     toggledValue('s_mult_mb1','t_mb1'),
     toggledValue('s_mult_mb2','t_mb2'),
-    parseFloat(document.getElementById('s_mult_resist').value)||1,
+    toggledValue('s_mult_resist','t_resist'),
     toggledValue('s_mult_kyoyuu','t_kyoyuu'),
     parseFloat(document.getElementById('s_mult_weather').value)||1,
     toggledValue('s_mult_gambit','t_gambit'),
     matkRatio,
     parseFloat(document.getElementById('s_mult_shell').value)||1,
-    parseFloat(document.getElementById('s_mult_kien').value)||1
+    toggledValue('s_mult_kien','t_kien')
   ];
   deltaIntOut.textContent = deltaInt;
   matkRatioOut.textContent = matkRatio.toFixed(3);
@@ -838,16 +897,18 @@ simIds.forEach(id=>{
 });
 
 const TOGGLE_PAIRS = [
+  ['t_soujou','s_mult_soujou'],
   ['t_mb1','s_mult_mb1'],
   ['t_mb2','s_mult_mb2'],
+  ['t_resist','s_mult_resist'],
   ['t_kyoyuu','s_mult_kyoyuu'],
-  ['t_gambit','s_mult_gambit']
+  ['t_gambit','s_mult_gambit'],
+  ['t_kien','s_mult_kien']
 ];
 function applyToggleVisual(toggleId, fieldId){
   const on = document.getElementById(toggleId).checked;
   const fieldDiv = document.getElementById(fieldId).closest('.field');
   fieldDiv.classList.toggle('is-off', !on);
-  document.getElementById(fieldId).disabled = !on;
 }
 TOGGLE_PAIRS.forEach(([toggleId, fieldId])=>{
   applyToggleVisual(toggleId, fieldId);
