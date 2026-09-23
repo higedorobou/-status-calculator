@@ -571,6 +571,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     document.querySelectorAll('.tabpanel').forEach(p=>p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+    if (typeof saveState === 'function') saveState();
   });
 });
 
@@ -747,6 +748,8 @@ function renderCalc(){
     document.getElementById('rk_ms_'+mt).textContent = ` | ${V}${W}`;
   });
 
+  saveState();
+
   return {race, mainJob, supportJob, mainLv,
     INT: statValue('INT', race, mainJob, supportJob, mainLv) + parseInt(document.getElementById('adj_INT').value||'0',10),
     matk: matkBase + parseInt(document.getElementById('adj_魔法攻撃力').value||'0',10),
@@ -888,6 +891,7 @@ function renderSpells(){
     tr.innerHTML = `<td>${sp.name}</td><td>${sp.base}</td><td class="dmg">${dmg.toLocaleString()}</td>`;
     spellBody.appendChild(tr);
   });
+  saveState();
 }
 
 simIds.forEach(id=>{
@@ -927,6 +931,70 @@ document.getElementById('syncBtn').addEventListener('click', ()=>{
   renderSpells();
 });
 
+// ===== persist last-used state across visits (localStorage, per-viewer only) =====
+const STORAGE_KEY = 'ffxiStatusCalcState_v1';
+const PERSIST_IDS = [
+  'race','mainJob','supportJob','mainLv',
+  ...STAT_NAMES.map(n=>'adj_'+n),
+  ...MAGIC_NAMES.map(m=>'adj_'+m.key),
+  ...simIds,
+  ...TOGGLE_PAIRS.map(p=>p[0])
+];
+
+function saveState(){
+  try{
+    const values = {};
+    PERSIST_IDS.forEach(id=>{
+      const el = document.getElementById(id);
+      if (!el) return;
+      values[id] = (el.type === 'checkbox') ? el.checked : el.value;
+    });
+    const activeTabBtn = document.querySelector('.tab-btn.active');
+    const activeFamilyBtn = document.querySelector('#spellFilter button.active');
+    const state = {
+      values,
+      activeTab: activeTabBtn ? activeTabBtn.dataset.tab : 'calc',
+      activeFamily: activeFamilyBtn ? activeFamilyBtn.textContent : 'すべて'
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch(e){ /* storage unavailable; ignore */ }
+}
+
+function loadState(){
+  let state = null;
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) state = JSON.parse(raw);
+  } catch(e){ return; }
+  if (!state) return;
+
+  try{
+    if (state.values){
+      Object.keys(state.values).forEach(id=>{
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (el.type === 'checkbox'){
+          el.checked = !!state.values[id];
+        } else {
+          el.value = state.values[id];
+        }
+      });
+    }
+    TOGGLE_PAIRS.forEach(([toggleId, fieldId])=>applyToggleVisual(toggleId, fieldId));
+
+    if (state.activeTab){
+      const btn = document.querySelector(`.tab-btn[data-tab="${state.activeTab}"]`);
+      if (btn) btn.click();
+    }
+    if (state.activeFamily){
+      const btns = document.querySelectorAll('#spellFilter button');
+      btns.forEach(b=>{ if (b.textContent === state.activeFamily) b.click(); });
+    }
+  } catch(e){ /* ignore malformed saved state */ }
+}
+
+loadState();
+lastCalc = renderCalc();
 renderSpells();
 
 </script>
