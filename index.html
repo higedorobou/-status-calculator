@@ -273,6 +273,8 @@ table.stat-table td.plus, table.stat-table td.eq{
   gap:14px;
 }
 .sim-grid .field{flex:0 1 110px; min-width:90px; max-width:120px;}
+.sim-grid .field.gap-before{margin-left:0;}
+.sim-grid .sim-break{flex-basis:100%; height:0; margin:0; padding:0;}
 
 .syncbar{
   display:flex;
@@ -440,9 +442,10 @@ footer.note{
       <span class="note">自INT・自魔攻・魔法ダメージ・MB.ボーナス((MBボーナス+MBボーナスII)÷100)を計算機タブの結果で上書きします</span>
     </div>
     <div class="sim-grid">
-      <div class="field"><label for="s_selfInt">自 INT</label><input type="number" id="s_selfInt" value="504"></div>
       <div class="field"><label for="s_enemyInt">敵 INT</label><input type="number" id="s_enemyInt" value="6"></div>
       <div class="field"><label for="s_enemyMdef">敵 魔法防御</label><input type="number" id="s_enemyMdef" value="100"></div>
+      <div class="sim-break"></div>
+      <div class="field gap-before"><label for="s_selfInt">自 INT</label><input type="number" id="s_selfInt" value="504"></div>
       <div class="field"><label for="s_selfMatk">自 魔法攻撃力</label><input type="number" id="s_selfMatk" value="563"></div>
       <div class="field"><label for="s_mdmg">魔法ダメージ</label><input type="number" id="s_mdmg" value="531"></div>
       <div class="field"><label for="s_mult_soujou">相乗効果</label>
