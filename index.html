@@ -226,7 +226,7 @@ table.stat-table td.total{
   width:20%;
 }
 table.stat-table input.adj{
-  width:48px;
+  width:38px;
   text-align:right;
   padding:4px 6px;
 }
@@ -262,7 +262,7 @@ table.stat-table td.plus, table.stat-table td.eq{
   text-align:right;
   font-family:var(--serif);
   font-weight:700;
-  color:var(--ink);
+  color:var(--blue);
   width:56px;
 }
 .skillgrid td.sval.zero{color:var(--ink-dim); font-weight:400;}
@@ -608,7 +608,7 @@ const statBody = document.getElementById('statBody');
 STAT_NAMES.forEach(name=>{
   const tr = document.createElement('tr');
   tr.innerHTML = `<td class="name"><span class="stat-abbr">${name}</span><span class="rank-inline" id="rank_${name}"></span></td><td class="base" id="base_${name}">-</td><td class="plus">+</td>
-    <td class="adjcell"><input type="text" inputmode="numeric" pattern="-?[0-9]*" class="adj" id="adj_${name}" value="0"></td><td class="eq">=</td>
+    <td class="adjcell"><input type="text" inputmode="numeric" pattern="-?[0-9]*" maxlength="4" class="adj" id="adj_${name}" value="0"></td><td class="eq">=</td>
     <td class="total" id="total_${name}">-</td>`;
   statBody.appendChild(tr);
 });
@@ -617,7 +617,7 @@ const magicBody = document.getElementById('magicBody');
 MAGIC_NAMES.forEach(m=>{
   const tr = document.createElement('tr');
   tr.innerHTML = `<td class="name">${m.label}</td><td class="base" id="base_${m.key}">-</td><td class="plus">+</td>
-    <td class="adjcell"><input type="text" inputmode="numeric" pattern="-?[0-9]*" class="adj" id="adj_${m.key}" value="0"></td><td class="eq">=</td>
+    <td class="adjcell"><input type="text" inputmode="numeric" pattern="-?[0-9]*" maxlength="4" class="adj" id="adj_${m.key}" value="0"></td><td class="eq">=</td>
     <td class="total" id="total_${m.key}">-</td>`;
   magicBody.appendChild(tr);
 });
@@ -760,8 +760,18 @@ function renderCalc(){
 }
 
 [raceSel, mainJobSel, supportJobSel, mainLvInput].forEach(el=>el.addEventListener('input', ()=>{ lastCalc = renderCalc(); }));
+function sanitizeAdjInput(el){
+  let v = el.value.replace(/[^0-9-]/g,'');
+  const neg = v.startsWith('-');
+  v = v.replace(/-/g,'');
+  v = v.slice(0,3);
+  el.value = (neg ? '-' : '') + v;
+}
 document.querySelectorAll('#statBody input, #magicBody input').forEach(el=>{
-  el.addEventListener('input', ()=>{ lastCalc = renderCalc(); });
+  el.addEventListener('input', ()=>{
+    sanitizeAdjInput(el);
+    lastCalc = renderCalc();
+  });
   el.addEventListener('focus', ()=>{
     if (el.value === '0'){
       el.value = '';
