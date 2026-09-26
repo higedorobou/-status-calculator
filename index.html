@@ -472,6 +472,19 @@ footer.note{
           <option value="2.80">2.80</option>
         </select>
       </div>
+      <div class="field"><label for="s_mult_renkei">連携ボーナス</label>
+        <select id="s_mult_renkei">
+          <option value="1.00">1</option>
+          <option value="1.05">1.05</option>
+          <option value="1.15">1.15</option>
+          <option value="1.25">1.25</option>
+          <option value="1.35">1.35</option>
+          <option value="1.45">1.45</option>
+          <option value="1.55">1.55</option>
+          <option value="1.65">1.65</option>
+          <option value="1.70">1.70</option>
+        </select>
+      </div>
       <div class="field"><label for="s_mult_mb2">MB.ボーナス</label><input type="number" step="0.01" id="s_mult_mb2" value="1"></div>
       <div class="field"><label for="s_mult_resist">レジスト</label>
         <select id="s_mult_resist">
@@ -537,10 +550,12 @@ footer.note{
       <span class="mult-toggles-label">反映するボーナス:</span>
       <label><input type="checkbox" id="t_soujou" class="toggle-cb">相乗効果</label>
       <label><input type="checkbox" id="t_mb1" class="toggle-cb">MBボーナス</label>
+      <label><input type="checkbox" id="t_renkei" class="toggle-cb">連携ボーナス</label>
       <label><input type="checkbox" id="t_mb2" class="toggle-cb">MB.ボーナス</label>
       <label><input type="checkbox" id="t_resist" class="toggle-cb">レジスト</label>
-      <label><input type="checkbox" id="t_gambit" class="toggle-cb">ガンビット</label>
       <label><input type="checkbox" id="t_kyoyuu" class="toggle-cb">虚誘掩殺</label>
+      <label><input type="checkbox" id="t_weather" class="toggle-cb">曜日・天候</label>
+      <label><input type="checkbox" id="t_gambit" class="toggle-cb">ガンビット</label>
       <label><input type="checkbox" id="t_kien" class="toggle-cb">気炎(魔法ダメージ+40)</label>
     </div>
     <div class="spell-filter" id="spellFilter"></div>
@@ -723,7 +738,9 @@ function renderCalc(){
 
   const matkBase = magicAtkBase(mainJob, supportJob, mainLv);
   const mdmgBase = APPDATA.jobTrait[mainJob].magicDmg;
-  const mbBase = APPDATA.jobTrait[mainJob].mbBonus;
+  const mainHasOwnMbTrait = (APPDATA.jobTrait[mainJob].mbBonus - 130) !== 0; // メインジョブ自身にMB.ボーナス特性があるか
+  const mbBase = (APPDATA.jobTrait[mainJob].mbBonus - 30) // 基礎MBを130→100に統一(差分-30を反映)
+    + (!mainHasOwnMbTrait && supportJob === '黒魔道士' ? (slv >= 58 ? 7 : 5) : 0); // サポート黒魔道士の特性(メインに特性がない場合のみ)
   const mb2Base = 0;
   const bases = {'魔法攻撃力':matkBase, '魔法ダメージ':mdmgBase, 'MBボーナス':mbBase, 'MBボーナスII':mb2Base};
   MAGIC_NAMES.forEach(m=>{
@@ -795,7 +812,7 @@ let lastCalc = renderCalc();
 
 // ===== tab 2: damage simulator =====
 const simIds = ['s_selfInt','s_enemyInt','s_enemyMdef','s_selfMatk','s_mdmg',
-  's_mult_soujou','s_mult_zokusei','s_mult_affi','s_mult_mb1','s_mult_mb2','s_mult_resist',
+  's_mult_soujou','s_mult_zokusei','s_mult_affi','s_mult_mb1','s_mult_renkei','s_mult_mb2','s_mult_resist',
   's_mult_kyoyuu','s_mult_weather','s_mult_gambit','s_mult_shell','s_mult_kien'];
 
 const deltaIntOut = document.getElementById('deltaIntOut');
@@ -874,15 +891,16 @@ function getSimParams(){
   if (kienOn) mdmg += 40;
   const deltaInt = selfInt - enemyInt;
   const matkRatio = enemyMdef!==0 ? (selfMatk/enemyMdef) : 0;
+  const renkeiAdd = document.getElementById('t_renkei').checked ? ((parseFloat(document.getElementById('s_mult_renkei').value)||1) - 1) : 0;
   const multChain = [
     toggledValue('s_mult_soujou','t_soujou'),
     parseFloat(document.getElementById('s_mult_zokusei').value)||1,
     parseFloat(document.getElementById('s_mult_affi').value)||1,
-    toggledValue('s_mult_mb1','t_mb1'),
+    toggledValue('s_mult_mb1','t_mb1') + renkeiAdd,
     toggledValue('s_mult_mb2','t_mb2'),
     toggledValue('s_mult_resist','t_resist'),
     toggledValue('s_mult_kyoyuu','t_kyoyuu'),
-    parseFloat(document.getElementById('s_mult_weather').value)||1,
+    toggledValue('s_mult_weather','t_weather'),
     toggledValue('s_mult_gambit','t_gambit'),
     matkRatio,
     parseFloat(document.getElementById('s_mult_shell').value)||1,
@@ -916,9 +934,11 @@ simIds.forEach(id=>{
 const TOGGLE_PAIRS = [
   ['t_soujou','s_mult_soujou'],
   ['t_mb1','s_mult_mb1'],
+  ['t_renkei','s_mult_renkei'],
   ['t_mb2','s_mult_mb2'],
   ['t_resist','s_mult_resist'],
   ['t_kyoyuu','s_mult_kyoyuu'],
+  ['t_weather','s_mult_weather'],
   ['t_gambit','s_mult_gambit'],
   ['t_kien','s_mult_kien']
 ];
