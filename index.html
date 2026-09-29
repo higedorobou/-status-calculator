@@ -1461,7 +1461,7 @@ function setupSim(ss){
   }
 
   async function downloadReport(){
-    const text = buildReportText();
+    const text = '\uFEFF' + buildReportText(); // 先頭にUTF-8のBOMを付け、文字化けを防ぐ
     const filename = `精霊魔法ダメージレポート_${ss}.txt`;
     try{
       if (window.claude && typeof window.claude.use === 'function'){
