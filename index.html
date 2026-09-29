@@ -798,7 +798,7 @@ footer.note{
   </div>
 
   <div class="card">
-    <h2>精霊魔法ダメージ一覧</h2>
+    <h2 class="card-h2-row">精霊魔法ダメージ一覧<button class="reset-adj-btn" id="reportBtn__1">レポートを保存(txt)</button></h2>
     <div class="mult-toggles">
       <span class="mult-toggles-label">反映するボーナス:</span>
       <label><input type="checkbox" id="t_soujou__1" class="toggle-cb">相乗効果</label>
@@ -937,7 +937,7 @@ footer.note{
   </div>
 
   <div class="card">
-    <h2>精霊魔法ダメージ一覧</h2>
+    <h2 class="card-h2-row">精霊魔法ダメージ一覧<button class="reset-adj-btn" id="reportBtn__2">レポートを保存(txt)</button></h2>
     <div class="mult-toggles">
       <span class="mult-toggles-label">反映するボーナス:</span>
       <label><input type="checkbox" id="t_soujou__2" class="toggle-cb">相乗効果</label>
@@ -1407,6 +1407,81 @@ function setupSim(ss){
   function setFamilyByLabel(label){
     spellFilterDiv.querySelectorAll('button').forEach(b=>{ if (b.textContent === label) b.click(); });
   }
+
+  function buildReportText(){
+    const params = getSimParams();
+    const now = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    const ts = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+    const lines = [];
+    lines.push('精霊魔法ダメージ レポート');
+    lines.push('作成日時\t' + ts);
+    lines.push('');
+    lines.push('■ ステータス');
+    lines.push('項目\t値');
+    lines.push('自INT\t' + $('s_selfInt').value);
+    lines.push('敵INT\t' + $('s_enemyInt').value);
+    lines.push('敵魔法防御\t' + $('s_enemyMdef').value);
+    lines.push('自魔法攻撃力\t' + $('s_selfMatk').value);
+    lines.push('魔法ダメージ\t' + $('s_mdmg').value + ($('t_kien').checked ? '(気炎+40込み)' : ''));
+    lines.push('⊿INT\t' + params.deltaInt);
+    lines.push('魔攻/魔防\t' + (params.multChain[9]).toFixed(3));
+    lines.push('');
+    lines.push('■ 反映するボーナス(倍率)');
+    lines.push('項目\t倍率\tON/OFF');
+    const bonusRows = [
+      ['相乗効果','t_soujou','s_mult_soujou'],
+      ['MBボーナス','t_mb1','s_mult_mb1'],
+      ['連携ボーナス','t_renkei','s_mult_renkei'],
+      ['MB.ボーナス','t_mb2','s_mult_mb2'],
+      ['レジスト','t_resist','s_mult_resist'],
+      ['虚誘掩殺','t_kyoyuu','s_mult_kyoyuu'],
+      ['曜日・天候','t_weather','s_mult_weather'],
+      ['ガンビット','t_gambit','s_mult_gambit'],
+      ['気炎','t_kien','s_mult_kien']
+    ];
+    bonusRows.forEach(([label,toggleId,fieldId])=>{
+      const on = $(toggleId).checked;
+      lines.push(`${label}\t${$(fieldId).value}\t${on ? 'ON' : 'OFF'}`);
+    });
+    lines.push('属性杖\t' + $('s_mult_zokusei').value + '\t-');
+    lines.push('アフィニティ\t' + $('s_mult_affi').value + '\t-');
+    lines.push('シェル等\t' + $('s_mult_shell').value + '\t-');
+    lines.push('');
+    lines.push('■ 精霊魔法ダメージ一覧(全72種)');
+    lines.push('魔法名\tD値\tダメージ');
+    APPDATA.spells.forEach(sp=>{
+      const dmg = computeSpellDamage(sp, params);
+      lines.push(`${sp.name}\t${sp.base}\t${dmg}`);
+    });
+    lines.push('');
+    lines.push('元のExcelファイル「ステータス計算機.xlsx」の数式を再現したツールによる算出結果です。');
+    return lines.join('\n');
+  }
+
+  async function downloadReport(){
+    const text = buildReportText();
+    const filename = `精霊魔法ダメージレポート_${ss}.txt`;
+    try{
+      if (window.claude && typeof window.claude.use === 'function'){
+        const downloads = await window.claude.use('downloads');
+        if (downloads){
+          await downloads.save({filename, data: text});
+          return;
+        }
+      }
+    } catch(e){ /* fall through to browser download */ }
+    try{
+      const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch(e){ /* give up quietly */ }
+  }
+  document.getElementById('reportBtn__'+ss).addEventListener('click', downloadReport);
 
   sims[ss] = {renderSpells, refreshToggles, getFamilyLabel, setFamilyByLabel};
 }
