@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -65,9 +64,27 @@ header.top{
   justify-content:space-between;
   flex-wrap:wrap;
   gap:10px 24px;
+  padding-bottom:14px;
+}
+.sticky-nav{
+  position:-webkit-sticky;
+  position:sticky;
+  top:env(safe-area-inset-top, 0px);
+  z-index:50;
+  background:var(--bg);
+  padding:8px 0;
+  margin-bottom:14px;
+  border-top:1px solid var(--line);
   border-bottom:1px solid var(--line);
-  padding-bottom:18px;
-  margin-bottom:22px;
+}
+.subtabs-bar{
+  position:-webkit-sticky;
+  position:sticky;
+  top:calc(var(--nav-h, 54px) + env(safe-area-inset-top, 0px));
+  z-index:40;
+  background:var(--bg);
+  padding:8px 0 10px;
+  margin-bottom:10px;
 }
 h1{
   font-family:var(--serif);
@@ -136,7 +153,7 @@ section.tabpanel.active{display:block;}
   border-radius:999px;
   padding:4px;
   width:fit-content;
-  margin-bottom:20px;
+  margin-bottom:0;
 }
 .subtab-btn, .simtab-btn{
   border:none;
@@ -153,6 +170,13 @@ section.tabpanel.active{display:block;}
   background:var(--gold);
   color:#20140a;
   font-weight:700;
+}
+.subtab-btn, .simtab-btn{white-space:nowrap;}
+@media(max-width:520px){
+  .subtabs{width:100%;}
+  .subtab-btn, .simtab-btn{flex:1; padding:7px 4px; font-size:.82rem;}
+  nav.tabs{width:100%;}
+  nav.tabs button{flex:1; padding:8px 6px; font-size:.86rem;}
 }
 .sim-instance{display:none;}
 .sim-instance.active{display:block;}
@@ -441,21 +465,25 @@ footer.note{
 
 <header class="top">
   <h1>ステータス計算機 詳細版<small>種族・職業・レベルからステータス、スキル上限、精霊魔法ダメージを算出</small></h1>
+</header>
+<div class="sticky-nav" id="stickyNav">
   <nav class="tabs">
     <button class="tab-btn active" data-tab="calc">ステータス計算機</button>
     <button class="tab-btn" data-tab="sim">精霊魔法ダメージ</button>
   </nav>
-</header>
+</div>
 
 <!-- ===================== TAB 1: CALCULATOR ===================== -->
 <section class="tabpanel active" id="tab-calc">
 
+<div class="subtabs-bar">
   <nav class="subtabs">
     <button class="subtab-btn active" data-calc="1">計算機1</button>
     <button class="subtab-btn" data-calc="2">計算機2</button>
     <button class="subtab-btn" data-calc="3">計算機3</button>
     <button class="subtab-btn" data-calc="4">計算機4</button>
   </nav>
+  </div>
 
   <div class="calc-instance active" data-suffix="1">
   <div class="card">
@@ -678,10 +706,12 @@ footer.note{
 <!-- ===================== TAB 2: DAMAGE SIM ===================== -->
 <section class="tabpanel" id="tab-sim">
 
+<div class="subtabs-bar">
   <nav class="subtabs">
     <button class="simtab-btn active" data-sim="1">ダメージ計算1</button>
     <button class="simtab-btn" data-sim="2">ダメージ計算2</button>
   </nav>
+  </div>
 
   <div class="sim-instance active" data-sim="1">
 
@@ -986,6 +1016,17 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     if (typeof saveState === 'function') saveState();
   });
 });
+
+// ===== sticky nav height -> CSS variable (サブタブをメインタブの直下に固定するため) =====
+(function(){
+  const nav = document.getElementById('stickyNav');
+  function setNavH(){ document.documentElement.style.setProperty('--nav-h', nav.offsetHeight + 'px'); }
+  setNavH();
+  window.addEventListener('resize', setNavH);
+  window.addEventListener('load', setNavH);
+  if (window.ResizeObserver) new ResizeObserver(setNavH).observe(nav);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(setNavH);
+})();
 
 // ===== calculator 1/2 sub-tab switching =====
 document.querySelectorAll('.subtab-btn').forEach(btn=>{
