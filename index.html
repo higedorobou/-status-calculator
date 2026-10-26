@@ -224,6 +224,12 @@ button.reset-adj-btn{
   cursor:pointer;
 }
 button.reset-adj-btn:hover{color:var(--ink); border-color:var(--blue);}
+.card-note{
+  margin:12px 0 0;
+  font-size:.78rem;
+  line-height:1.6;
+  color:var(--ink-dim);
+}
 .grid-setup{
   display:flex;
   flex-wrap:wrap;
@@ -526,6 +532,7 @@ footer.note{
       <thead><tr><th>項目</th><th>基本値</th><th></th><th>加算</th><th></th><th>合計</th></tr></thead>
       <tbody id="magicBody1"></tbody>
     </table>
+    <p class="card-note">※ MB.ボーナスの加算は、40を超えて入力しても合計には+40までしか加算されません。</p>
   </div>
 
   <div class="card">
@@ -580,6 +587,7 @@ footer.note{
       <thead><tr><th>項目</th><th>基本値</th><th></th><th>加算</th><th></th><th>合計</th></tr></thead>
       <tbody id="magicBody2"></tbody>
     </table>
+    <p class="card-note">※ MB.ボーナスの加算は、40を超えて入力しても合計には+40までしか加算されません。</p>
   </div>
 
   <div class="card">
@@ -634,6 +642,7 @@ footer.note{
       <thead><tr><th>項目</th><th>基本値</th><th></th><th>加算</th><th></th><th>合計</th></tr></thead>
       <tbody id="magicBody3"></tbody>
     </table>
+    <p class="card-note">※ MB.ボーナスの加算は、40を超えて入力しても合計には+40までしか加算されません。</p>
   </div>
 
   <div class="card">
@@ -688,6 +697,7 @@ footer.note{
       <thead><tr><th>項目</th><th>基本値</th><th></th><th>加算</th><th></th><th>合計</th></tr></thead>
       <tbody id="magicBody4"></tbody>
     </table>
+    <p class="card-note">※ MB.ボーナスの加算は、40を超えて入力しても合計には+40までしか加算されません。</p>
   </div>
 
   <div class="card">
@@ -748,8 +758,8 @@ footer.note{
           <option value="1.30">1.30</option>
           <option value="1.35">1.35</option>
           <option value="1.45">1.45</option>
-          <option value="1.75">1.75</option>
-          <option value="1.95">1.95</option>
+          <option value="1.70">1.70</option>
+          <option value="1.90">1.90</option>
           <option value="2.15">2.15</option>
           <option value="2.45">2.45</option>
           <option value="2.80">2.80</option>
@@ -887,8 +897,8 @@ footer.note{
           <option value="1.30">1.30</option>
           <option value="1.35">1.35</option>
           <option value="1.45">1.45</option>
-          <option value="1.75">1.75</option>
-          <option value="1.95">1.95</option>
+          <option value="1.70">1.70</option>
+          <option value="1.90">1.90</option>
           <option value="2.15">2.15</option>
           <option value="2.45">2.45</option>
           <option value="2.80">2.80</option>
@@ -1092,7 +1102,7 @@ function setupInstance(suf){
   MAGIC_NAMES.forEach(m=>{
     const tr = document.createElement('tr');
     tr.innerHTML = `<td class="name">${m.label}</td><td class="base" id="base_${m.key}_${suf}">-</td><td class="plus">+</td>
-      <td class="adjcell"><input type="text" inputmode="numeric" pattern="-?[0-9]*" maxlength="4" class="adj" id="adj_${m.key}_${suf}" value="0"></td><td class="eq">=</td>
+      <td class="adjcell"><input type="text" inputmode="numeric" pattern="-?[0-9]*" maxlength="4" class="adj" id="adj_${m.key}_${suf}" value="0"${m.key === 'MBボーナス' ? ' title="合計への加算は+40までです"' : ''}></td><td class="eq">=</td>
       <td class="total" id="total_${m.key}_${suf}">-</td>`;
     magicBody.appendChild(tr);
   });
@@ -1196,7 +1206,8 @@ function renderCalc(suf){
   const bases = {'魔法攻撃力':matkBase, '魔法ダメージ':mdmgBase, 'MBボーナス':mbBase, 'MBボーナスII':mb2Base};
   MAGIC_NAMES.forEach(m=>{
     document.getElementById('base_'+m.key+'_'+suf).textContent = bases[m.key];
-    const adj = parseInt(document.getElementById('adj_'+m.key+'_'+suf).value||'0',10);
+    let adj = parseInt(document.getElementById('adj_'+m.key+'_'+suf).value||'0',10);
+    if (m.key === 'MBボーナス') adj = Math.min(adj, 40); // MB.ボーナスの加算は+40まで(超えて入力しても合計は+40止まり)
     document.getElementById('total_'+m.key+'_'+suf).textContent = bases[m.key] + adj;
   });
 
@@ -1225,7 +1236,7 @@ function renderCalc(suf){
     INT: statValue('INT', race, mainJob, supportJob, mainLv) + parseInt(document.getElementById('adj_INT_'+suf).value||'0',10),
     matk: matkBase + parseInt(document.getElementById('adj_魔法攻撃力_'+suf).value||'0',10),
     mdmg: mdmgBase + parseInt(document.getElementById('adj_魔法ダメージ_'+suf).value||'0',10),
-    mb: mbBase + parseInt(document.getElementById('adj_MBボーナス_'+suf).value||'0',10),
+    mb: mbBase + Math.min(parseInt(document.getElementById('adj_MBボーナス_'+suf).value||'0',10), 40),
     mb2: mb2Base + parseInt(document.getElementById('adj_MBボーナスII_'+suf).value||'0',10)
   };
 }
