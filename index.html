@@ -376,6 +376,7 @@ table.stat-table td.plus, table.stat-table td.eq{
 }
 .sim-grid .field{flex:0 1 110px; min-width:90px; max-width:120px;}
 .sim-grid .field.gap-before{margin-left:0;}
+.sim-grid .field.field-wide{flex-basis:170px; max-width:190px;}
 .sim-grid .sim-break{flex-basis:100%; height:0; margin:0; padding:0;}
 
 .syncbar{
@@ -753,16 +754,16 @@ footer.note{
       </div>
       <div class="field"><label for="s_mult_zokusei__1">属性杖</label><input type="number" step="0.01" id="s_mult_zokusei__1" value="1"></div>
       <div class="field"><label for="s_mult_affi__1">アフィニティ</label><input type="number" step="0.01" id="s_mult_affi__1" value="1"></div>
-      <div class="field"><label for="s_mult_mb1__1">MBボーナス</label>
+      <div class="field field-wide"><label for="s_mult_mb1__1">MBボーナス</label>
         <select id="s_mult_mb1__1">
-          <option value="1.30">1.30</option>
-          <option value="1.35">1.35</option>
-          <option value="1.45">1.45</option>
-          <option value="1.70">1.70</option>
-          <option value="1.90">1.90</option>
-          <option value="2.15">2.15</option>
-          <option value="2.45">2.45</option>
-          <option value="2.80">2.80</option>
+          <option value="1.30">1.30_5-40%</option>
+          <option value="1.35">1.35_50%</option>
+          <option value="1.45">1.45_60%</option>
+          <option value="1.70">1.70_70%</option>
+          <option value="1.90">1.90_85%</option>
+          <option value="2.15">2.15_100%</option>
+          <option value="2.45">2.45_115%</option>
+          <option value="2.80">2.80_130-150%</option>
         </select>
       </div>
       <div class="field"><label for="s_mult_renkei__1">連携ボーナス</label>
@@ -821,6 +822,14 @@ footer.note{
         </select>
       </div>
       <div class="field"><label for="s_mult_shell__1">シェル等</label><input type="number" step="0.01" id="s_mult_shell__1" value="1"></div>
+      <div class="field"><label for="s_mult_vcut__1">Vカット</label>
+        <select id="s_mult_vcut__1">
+          <option value="0">V0</option>
+          <option value="37">V15</option>
+          <option value="49">V20</option>
+          <option value="64">V25</option>
+        </select>
+      </div>
       <div class="field"><label for="s_mult_kien__1">気炎</label>
         <select id="s_mult_kien__1">
           <option value="1.00">1.00</option>
@@ -849,6 +858,7 @@ footer.note{
       <label><input type="checkbox" id="t_kyoyuu__1" class="toggle-cb">虚誘掩殺</label>
       <label><input type="checkbox" id="t_weather__1" class="toggle-cb">曜日・天候</label>
       <label><input type="checkbox" id="t_gambit__1" class="toggle-cb">ガンビット</label>
+      <label><input type="checkbox" id="t_vcut__1" class="toggle-cb">Vカット</label>
       <label><input type="checkbox" id="t_kien__1" class="toggle-cb">気炎(魔法ダメージ+40)</label>
     </div>
     <div class="spell-filter" id="spellFilter__1"></div>
@@ -892,16 +902,16 @@ footer.note{
       </div>
       <div class="field"><label for="s_mult_zokusei__2">属性杖</label><input type="number" step="0.01" id="s_mult_zokusei__2" value="1"></div>
       <div class="field"><label for="s_mult_affi__2">アフィニティ</label><input type="number" step="0.01" id="s_mult_affi__2" value="1"></div>
-      <div class="field"><label for="s_mult_mb1__2">MBボーナス</label>
+      <div class="field field-wide"><label for="s_mult_mb1__2">MBボーナス</label>
         <select id="s_mult_mb1__2">
-          <option value="1.30">1.30</option>
-          <option value="1.35">1.35</option>
-          <option value="1.45">1.45</option>
-          <option value="1.70">1.70</option>
-          <option value="1.90">1.90</option>
-          <option value="2.15">2.15</option>
-          <option value="2.45">2.45</option>
-          <option value="2.80">2.80</option>
+          <option value="1.30">1.30_5-40%</option>
+          <option value="1.35">1.35_50%</option>
+          <option value="1.45">1.45_60%</option>
+          <option value="1.70">1.70_70%</option>
+          <option value="1.90">1.90_85%</option>
+          <option value="2.15">2.15_100%</option>
+          <option value="2.45">2.45_115%</option>
+          <option value="2.80">2.80_130-150%</option>
         </select>
       </div>
       <div class="field"><label for="s_mult_renkei__2">連携ボーナス</label>
@@ -960,6 +970,14 @@ footer.note{
         </select>
       </div>
       <div class="field"><label for="s_mult_shell__2">シェル等</label><input type="number" step="0.01" id="s_mult_shell__2" value="1"></div>
+      <div class="field"><label for="s_mult_vcut__2">Vカット</label>
+        <select id="s_mult_vcut__2">
+          <option value="0">V0</option>
+          <option value="37">V15</option>
+          <option value="49">V20</option>
+          <option value="64">V25</option>
+        </select>
+      </div>
       <div class="field"><label for="s_mult_kien__2">気炎</label>
         <select id="s_mult_kien__2">
           <option value="1.00">1.00</option>
@@ -988,6 +1006,7 @@ footer.note{
       <label><input type="checkbox" id="t_kyoyuu__2" class="toggle-cb">虚誘掩殺</label>
       <label><input type="checkbox" id="t_weather__2" class="toggle-cb">曜日・天候</label>
       <label><input type="checkbox" id="t_gambit__2" class="toggle-cb">ガンビット</label>
+      <label><input type="checkbox" id="t_vcut__2" class="toggle-cb">Vカット</label>
       <label><input type="checkbox" id="t_kien__2" class="toggle-cb">気炎(魔法ダメージ+40)</label>
     </div>
     <div class="spell-filter" id="spellFilter__2"></div>
@@ -1073,6 +1092,19 @@ function buildSkillCols(container, names, prefix){
   container.appendChild(colB);
 }
 
+// ===== サポートジョブ「なし」: すべてランク'-'(補正なし)として扱う =====
+const NO_SUPPORT = 'なし';
+(function(){
+  const stats = {};
+  STAT_NAMES.forEach(n=>{ stats[n] = '-'; });
+  APPDATA.jobsStats[NO_SUPPORT] = stats;
+  const bs = {}; APPDATA.weaponOrder.forEach(w=>{ bs[w] = '-'; });
+  APPDATA.battleSkillTable[NO_SUPPORT] = bs;
+  const ms = {}; APPDATA.magicOrder.forEach(m=>{ ms[m] = '-'; });
+  APPDATA.magicSkillTable[NO_SUPPORT] = ms;
+  APPDATA.jobTraitSupport[NO_SUPPORT] = {'49':0,'50':0};
+})();
+
 function setupInstance(suf){
   const raceSel = document.getElementById('race'+suf);
   const mainJobSel = document.getElementById('mainJob'+suf);
@@ -1081,6 +1113,7 @@ function setupInstance(suf){
   APPDATA.raceOrder.forEach(r=>{
     const o = document.createElement('option'); o.value=r; o.textContent=r; raceSel.appendChild(o);
   });
+  const oNone = document.createElement('option'); oNone.value=NO_SUPPORT; oNone.textContent=NO_SUPPORT; supportJobSel.appendChild(oNone); // サポートジョブ「なし」
   APPDATA.jobOrder.forEach(j=>{
     const o1 = document.createElement('option'); o1.value=j; o1.textContent=j; mainJobSel.appendChild(o1);
     const o2 = document.createElement('option'); o2.value=j; o2.textContent=j; supportJobSel.appendChild(o2);
@@ -1184,7 +1217,7 @@ function renderCalc(suf){
   const mainLv = parseInt(mainLvInput.value,10);
   mainLvOut.textContent = mainLv;
   const slv = calcSLV(mainLv);
-  slvOut.textContent = slv;
+  slvOut.textContent = (supportJob === NO_SUPPORT) ? '-' : slv;
 
   STAT_NAMES.forEach(name=>{
     const base = statValue(name, race, mainJob, supportJob, mainLv);
@@ -1280,7 +1313,7 @@ SUFFIXES.forEach(suf=>{
 
 SUFFIXES.forEach(suf=>{ lastCalc[suf] = renderCalc(suf); });
 
-document.querySelectorAll('.reset-adj-btn').forEach(btn=>{
+document.querySelectorAll('.reset-adj-btn[data-section]').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     const suf = btn.dataset.suffix;
     const section = btn.dataset.section; // 'stat' or 'magic'
@@ -1294,7 +1327,7 @@ document.querySelectorAll('.reset-adj-btn').forEach(btn=>{
 const SIM_SUFFIXES = ['1','2'];
 const simIds = ['s_selfInt','s_enemyInt','s_enemyMdef','s_selfMatk','s_mdmg',
   's_mult_soujou','s_mult_zokusei','s_mult_affi','s_mult_mb1','s_mult_renkei','s_mult_mb2','s_mult_resist',
-  's_mult_kyoyuu','s_mult_weather','s_mult_gambit','s_mult_shell','s_mult_kien'];
+  's_mult_kyoyuu','s_mult_weather','s_mult_gambit','s_mult_shell','s_mult_vcut','s_mult_kien'];
 
 const TOGGLE_PAIRS = [
   ['t_soujou','s_mult_soujou'],
@@ -1305,6 +1338,7 @@ const TOGGLE_PAIRS = [
   ['t_kyoyuu','s_mult_kyoyuu'],
   ['t_weather','s_mult_weather'],
   ['t_gambit','s_mult_gambit'],
+  ['t_vcut','s_mult_vcut'],
   ['t_kien','s_mult_kien']
 ];
 
@@ -1399,6 +1433,7 @@ function setupSim(ss){
       toggledValue('s_mult_gambit','t_gambit'),
       matkRatio,
       parseFloat($('s_mult_shell').value)||1,
+      $('t_vcut').checked ? (256 - (parseFloat($('s_mult_vcut').value)||0)) / 256 : 1, // Vカット(気炎の直前): カット率n/256 → 倍率(256-n)/256
       toggledValue('s_mult_kien','t_kien')
     ];
     deltaIntOut.textContent = deltaInt;
@@ -1491,11 +1526,13 @@ function setupSim(ss){
       ['虚誘掩殺','t_kyoyuu','s_mult_kyoyuu'],
       ['曜日・天候','t_weather','s_mult_weather'],
       ['ガンビット','t_gambit','s_mult_gambit'],
+      ['Vカット','t_vcut','s_mult_vcut', el=>`${el.options[el.selectedIndex].text}(${el.value}/256)`],
       ['気炎','t_kien','s_mult_kien']
     ];
-    bonusRows.forEach(([label,toggleId,fieldId])=>{
+    bonusRows.forEach(([label,toggleId,fieldId,fmt])=>{
       const on = $(toggleId).checked;
-      lines.push(`${label}\t${$(fieldId).value}\t${on ? 'ON' : 'OFF'}`);
+      const el = $(fieldId);
+      lines.push(`${label}\t${fmt ? fmt(el) : el.value}\t${on ? 'ON' : 'OFF'}`);
     });
     lines.push('属性杖\t' + $('s_mult_zokusei').value + '\t-');
     lines.push('アフィニティ\t' + $('s_mult_affi').value + '\t-');
