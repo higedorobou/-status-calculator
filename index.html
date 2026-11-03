@@ -472,6 +472,8 @@ table.spell-table td.dmg{
   font-size:1rem;
 }
 table.spell-table tr:hover td{background:var(--panel-2);}
+table.spell-table tr.sub-row td{color:var(--ink-dim); font-size:.86rem;}
+table.spell-table tr.sub-row td.dmg{color:var(--gold-soft); font-size:.92rem; font-weight:400;}
 .spell-scroll{overflow-x:auto; border:1px solid var(--line); border-radius:4px;}
 
 footer.note{
@@ -750,7 +752,7 @@ footer.note{
       <button class="sync" id="syncBtn2__1">計算機2の値を反映</button>
       <button class="sync" id="syncBtn3__1">計算機3の値を反映</button>
       <button class="sync" id="syncBtn4__1">計算機4の値を反映</button>
-      <span class="note">自INT・自魔攻・魔法ダメージ・MB.ボーナス((MBボーナス+MBボーナスII)÷100)を選んだ計算機の結果で上書きします</span>
+      <span class="note">自INT・自魔攻・魔法ダメージ・暗黒魔法スキル・MB.ボーナス((MBボーナス+MBボーナスII)÷100)を選んだ計算機の結果で上書きします</span>
     </div>
     <div class="sim-grid">
       <div class="field"><label for="s_enemyInt__1">敵 INT</label><input type="number" id="s_enemyInt__1" value="6"></div>
@@ -759,6 +761,7 @@ footer.note{
       <div class="field gap-before"><label for="s_selfInt__1">自 INT</label><input type="number" id="s_selfInt__1" value="504"></div>
       <div class="field"><label for="s_selfMatk__1">自 魔法攻撃力</label><input type="number" id="s_selfMatk__1" value="563"></div>
       <div class="field"><label for="s_mdmg__1">魔法ダメージ</label><input type="number" id="s_mdmg__1" value="531"></div>
+      <div class="field"><label for="s_darkskill__1">暗黒魔法スキル</label><input type="number" id="s_darkskill__1" value="501"></div>
       <div class="field"><label for="s_mult_soujou__1">相乗効果</label>
         <select id="s_mult_soujou__1">
           <option value="1.00">1.00</option>
@@ -898,7 +901,7 @@ footer.note{
       <button class="sync" id="syncBtn2__2">計算機2の値を反映</button>
       <button class="sync" id="syncBtn3__2">計算機3の値を反映</button>
       <button class="sync" id="syncBtn4__2">計算機4の値を反映</button>
-      <span class="note">自INT・自魔攻・魔法ダメージ・MB.ボーナス((MBボーナス+MBボーナスII)÷100)を選んだ計算機の結果で上書きします</span>
+      <span class="note">自INT・自魔攻・魔法ダメージ・暗黒魔法スキル・MB.ボーナス((MBボーナス+MBボーナスII)÷100)を選んだ計算機の結果で上書きします</span>
     </div>
     <div class="sim-grid">
       <div class="field"><label for="s_enemyInt__2">敵 INT</label><input type="number" id="s_enemyInt__2" value="6"></div>
@@ -907,6 +910,7 @@ footer.note{
       <div class="field gap-before"><label for="s_selfInt__2">自 INT</label><input type="number" id="s_selfInt__2" value="504"></div>
       <div class="field"><label for="s_selfMatk__2">自 魔法攻撃力</label><input type="number" id="s_selfMatk__2" value="563"></div>
       <div class="field"><label for="s_mdmg__2">魔法ダメージ</label><input type="number" id="s_mdmg__2" value="531"></div>
+      <div class="field"><label for="s_darkskill__2">暗黒魔法スキル</label><input type="number" id="s_darkskill__2" value="501"></div>
       <div class="field"><label for="s_mult_soujou__2">相乗効果</label>
         <select id="s_mult_soujou__2">
           <option value="1.00">1.00</option>
@@ -1283,6 +1287,7 @@ function renderCalc(suf){
   saveState();
 
   return {race, mainJob, supportJob, mainLv,
+    darkSkill: magicSkillValue('暗黒魔法', mainJob, supportJob, mainLv),
     INT: statValue('INT', race, mainJob, supportJob, mainLv) + parseInt(document.getElementById('adj_INT_'+suf).value||'0',10),
     matk: matkBase + parseInt(document.getElementById('adj_魔法攻撃力_'+suf).value||'0',10),
     mdmg: mdmgBase + parseInt(document.getElementById('adj_魔法ダメージ_'+suf).value||'0',10),
@@ -1342,7 +1347,7 @@ document.querySelectorAll('.reset-adj-btn[data-section]').forEach(btn=>{
 
 // ===== tab 2: damage simulator (2 independent instances) =====
 const SIM_SUFFIXES = ['1','2'];
-const simIds = ['s_selfInt','s_enemyInt','s_enemyMdef','s_selfMatk','s_mdmg',
+const simIds = ['s_selfInt','s_enemyInt','s_enemyMdef','s_selfMatk','s_mdmg','s_darkskill',
   's_mult_soujou','s_mult_zokusei','s_mult_affi','s_mult_mb1','s_mult_renkei','s_mult_mb2','s_mult_resist',
   's_mult_kyoyuu','s_mult_weather','s_mult_gambit','s_mult_shell','s_mult_vcut','s_mult_kien'];
 
@@ -1365,13 +1370,16 @@ const FAMILY_MAP = {
   'ウォータ':'水', 'ウォタガ':'水', 'ウォタジャ':'水', 'フラッド':'水',
   'エアロ':'風', 'エアロガ':'風', 'エアロジャ':'風', 'トルネド':'風',
   'ブリザド':'氷', 'ブリザガ':'氷', 'ブリザジャ':'氷', 'フリーズ':'氷',
-  'サンダー':'雷', 'サンダガ':'雷', 'サンダジャ':'雷', 'バースト':'雷'
+  'サンダー':'雷', 'サンダガ':'雷', 'サンダジャ':'雷', 'バースト':'雷',
+  'メルトン':'闇'
 };
 function familyOf(name){
   const stripped = name.replace(/VI|V|IV|III|II|I$/,'');
   return FAMILY_MAP[stripped] || '他';
 }
-const FAMILY_ORDER = ['土','水','風','火','氷','雷'];
+const FAMILY_ORDER = ['土','水','風','火','氷','雷','闇'];
+// メルトン(闇): D値は固定ではなく式で算出するため、特別扱いの目印(special)を付けて追加
+APPDATA.spells.push({name:'メルトン', base:null, mults:[], special:'melton'});
 
 function tierAmt(mult, cap, prevCap, delta){
   if (mult===null || mult===undefined) return 0;
@@ -1385,7 +1393,32 @@ function tierAmt(mult, cap, prevCap, delta){
 }
 const CAPS = [50,100,200,300,400,500,600];
 
+// ===== メルトン: 固定のD値はなく、式でD値を求める =====
+// 使用者(学者)のレベルは99固定 → レベル係数 = int(99 × 67/100) = 66
+// INT差は上限30(係数ではなくINT差そのものの上限)。INT差係数 = int(min(INT差,300) × 67/100) + 37 (気炎使用時のみ +40)
+// D値        = int(レベル係数 × INT差係数 / 10)
+const MELTON_LEVEL = 99;
+const MELTON_INT_DIFF_CAP = 300;
+function meltonD(level, deltaInt, kienOn){
+  const levelCoef = Math.trunc(level * 67 / 100);
+  const intCoef = Math.trunc(Math.min(deltaInt, MELTON_INT_DIFF_CAP) * 67 / 100) + 37 + (kienOn ? 40 : 0);
+  return Math.trunc(levelCoef * intCoef / 10);
+}
+// メルトンの効果時間(秒) = {1 + int(暗黒魔法スキル / 11)} × 3
+function meltonDuration(darkSkill){
+  return (1 + Math.trunc(darkSkill / 11)) * 3;
+}
+function spellDValue(spell, params){
+  return spell.special === 'melton' ? meltonD(MELTON_LEVEL, params.deltaInt, params.kienOn) : spell.base;
+}
+
 function computeSpellDamage(spell, params){
+  if (spell.special === 'melton'){
+    // 魔法ダメージ(気炎の魔法ダメージ+40も含む)は使わない(気炎はD値のINT差係数へ+40)。MBボーナスは基本値1.3(選択値は不使用)に連携ボーナスを加算(params.meltonChain側で設定)
+    let v = meltonD(MELTON_LEVEL, params.deltaInt, params.kienOn);
+    params.meltonChain.forEach(m=>{ v = Math.trunc(v*m); });
+    return v;
+  }
   let total = spell.base;
   let prev = 0;
   CAPS.forEach((cap,i)=>{
@@ -1455,7 +1488,10 @@ function setupSim(ss){
     ];
     deltaIntOut.textContent = deltaInt;
     matkRatioOut.textContent = matkRatio.toFixed(3);
-    return {deltaInt, mdmg, multChain};
+    // メルトン用の倍率: MBボーナスは基本値1.3(ONのときだけ。選択値は使わない)。連携ボーナスは通常どおり加算
+    const meltonChain = multChain.slice();
+    meltonChain[3] = ($('t_mb1').checked ? 1.3 : 1) + renkeiAdd;
+    return {deltaInt, mdmg, multChain, meltonChain, kienOn: $('t_kien').checked, darkSkill: parseFloat($('s_darkskill').value)||0};
   }
 
   function renderSpells(){
@@ -1466,8 +1502,15 @@ function setupSim(ss){
       if (activeFamily!=='ALL' && fam!==activeFamily) return;
       const dmg = computeSpellDamage(sp, params);
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${sp.name}</td><td>${sp.base}</td><td class="dmg">${dmg.toLocaleString()}</td>`;
+      tr.innerHTML = `<td>${sp.name}</td><td>${spellDValue(sp, params)}</td><td class="dmg">${dmg.toLocaleString()}</td>`;
       spellBody.appendChild(tr);
+      if (sp.special === 'melton'){
+        // メルトンの下に効果時間の行を追加
+        const sub = document.createElement('tr');
+        sub.className = 'sub-row';
+        sub.innerHTML = `<td>　└ 効果時間</td><td>スリップ${meltonDuration(params.darkSkill) / 3}回</td><td class="dmg">${meltonDuration(params.darkSkill)}秒</td>`;
+        spellBody.appendChild(sub);
+      }
     });
     saveState();
   }
@@ -1499,6 +1542,7 @@ function setupSim(ss){
       $('s_selfInt').value = calc.INT;
       $('s_selfMatk').value = calc.matk;
       $('s_mdmg').value = calc.mdmg;
+      $('s_darkskill').value = calc.darkSkill;
       $('s_mult_mb2').value = (calc.mb + calc.mb2) / 100;
       renderSpells();
     });
@@ -1530,6 +1574,7 @@ function setupSim(ss){
     lines.push('自魔法攻撃力\t' + $('s_selfMatk').value);
     lines.push('魔法ダメージ\t' + $('s_mdmg').value + ($('t_kien').checked ? '(気炎+40込み)' : ''));
     lines.push('⊿INT\t' + params.deltaInt);
+    lines.push('暗黒魔法スキル\t' + $('s_darkskill').value);
     lines.push('魔攻/魔防\t' + (params.multChain[9]).toFixed(3));
     lines.push('');
     lines.push('■ 反映するボーナス(倍率)');
@@ -1555,12 +1600,17 @@ function setupSim(ss){
     lines.push('アフィニティ\t' + $('s_mult_affi').value + '\t-');
     lines.push('シェル等\t' + $('s_mult_shell').value + '\t-');
     lines.push('');
-    lines.push('■ 精霊魔法ダメージ一覧(全72種)');
+    lines.push(`■ 精霊魔法ダメージ一覧(全${APPDATA.spells.length}種)`);
     lines.push('魔法名\tD値\tダメージ');
     APPDATA.spells.forEach(sp=>{
       const dmg = computeSpellDamage(sp, params);
-      lines.push(`${sp.name}\t${sp.base}\t${dmg}`);
+      lines.push(`${sp.name}\t${spellDValue(sp, params)}\t${dmg}`);
+      if (sp.special === 'melton'){
+        lines.push(`メルトン効果時間(秒)\t\t${meltonDuration(params.darkSkill)}`);
+        lines.push(`メルトンスリップ回数(効果時間÷3秒)\t\t${meltonDuration(params.darkSkill) / 3}`);
+      }
     });
+    lines.push('※メルトンはD値を式で算出(使用者Lv99固定、INT差は上限300、気炎ON時はINT差係数+40、魔法ダメージは不使用、MBボーナスは1.3のみ適用・連携ボーナスは有効)');
     lines.push('');
     lines.push('元のExcelファイル「ステータス計算機.xlsx」の数式を再現したツールによる算出結果です。');
     return lines.join('\n');
